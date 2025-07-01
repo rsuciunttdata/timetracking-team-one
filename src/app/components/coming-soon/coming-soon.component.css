@@ -1,0 +1,78 @@
+/* Custom animations and utilities that extend Tailwind */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out;
+}
+
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Custom Material overrides for better integration with Tailwind */
+.mat-mdc-card {
+  border-radius: 1rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.mat-mdc-progress-bar .mdc-linear-progress__bar-inner {
+  border-radius: 9999px !important;
+}
+
+.mat-mdc-progress-bar {
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+  .grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .flex.items-center.gap-4 {
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 0.5rem !important;
+  }
+  
+  .text-5xl {
+    font-size: 2rem !important;
+  }
+  
+  .text-4xl {
+    font-size: 2rem !important;
+  }
+  
+  .text-xl {
+    font-size: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .flex.items-center.justify-center.gap-4 {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .text-6xl {
+    font-size: 3rem !important;
+  }
+  
+  .text-5xl {
+    font-size: 1.5rem !important;
+  }
+  
+  .text-4xl {
+    font-size: 1.5rem !important;
+  }
+}
