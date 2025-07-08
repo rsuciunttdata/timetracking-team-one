@@ -5,8 +5,13 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./components/coming-soon/coming-soon.component').then(m => m.ComingSoonComponent),
   },
+  // {
+  //   path: '**',
+  //   redirectTo: ''
+  // }
+
   {
     path: '**',
-    redirectTo: ''
+    loadComponent: () => import('./components/not-found/not-found').then(m => m.NotFound)
   }
 ];
