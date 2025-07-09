@@ -9,6 +9,10 @@ export const routes: Routes = [
   //   path: '**',
   //   redirectTo: ''
   // }
+  {
+    path:'login',
+    loadComponent: () =>import('./components/login/login').then(m=>m.Login),
+  },
 
   {
     path: '**',
