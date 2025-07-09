@@ -3,6 +3,14 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
+    loadComponent: () => import('./pages/timesheet-page.component').then(m => m.TimesheetPageComponent),
+  },
+  {
+    path: 'timesheet',
+    loadComponent: () => import('./pages/timesheet-page.component').then(m => m.TimesheetPageComponent),
+  },
+  {
+    path: 'coming-soon',
     loadComponent: () => import('./components/coming-soon/coming-soon.component').then(m => m.ComingSoonComponent),
   },
   {
