@@ -1,0 +1,300 @@
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+}
+
+/* Empty State */
+.empty-state-card {
+  margin: 2rem 0;
+  border-radius: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Compact Table Styles */
+.compact-table {
+  font-size: 0.875rem !important;
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+.compact-table .mat-mdc-header-row {
+  height: 4rem !important;
+  min-height: 4rem !important;
+  max-height: 4rem !important;
+  background-color: #f9fafb !important;
+}
+
+.compact-table .mat-mdc-row {
+  height: 4rem !important;
+  min-height: 4rem !important;
+  max-height: 4rem !important;
+}
+
+.compact-table .mat-mdc-cell,
+.compact-table .mat-mdc-header-cell {
+  padding: 8px 12px !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25 !important;
+  vertical-align: middle !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.compact-table .mat-mdc-header-cell {
+  font-weight: 600 !important;
+  color: #374151 !important;
+}
+
+/* Material Table Density Override */
+.compact-table .mdc-data-table__row {
+  height: 4rem !important;
+  min-height: 4rem !important;
+  max-height: 4rem !important;
+}
+
+.compact-table .mdc-data-table__header-row {
+  height: 4rem !important;
+  min-height: 4rem !important;
+  max-height: 4rem !important;
+}
+
+.compact-table .mdc-data-table__cell,
+.compact-table .mdc-data-table__header-cell {
+  padding: 8px 12px !important;
+  vertical-align: middle !important;
+}
+
+/* Hover effects */
+.compact-table .mat-mdc-row:hover {
+  background-color: #f9fafb !important;
+}
+
+/* Table container styles */
+::ng-deep .mat-mdc-table {
+  width: 100% !important;
+}
+
+::ng-deep .mat-mdc-table-container {
+  overflow: auto !important;
+}
+
+/* Icon Button Sizing */
+.compact-table .mat-mdc-icon-button {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 4px !important;
+}
+
+.compact-table .mat-mdc-icon-button .mat-icon {
+  font-size: 18px !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* Chip Styling */
+.compact-table .mat-mdc-chip {
+  height: 20px !important;
+  font-size: 0.625rem !important;
+  padding: 0 6px !important;
+}
+
+.empty-state h3 {
+  margin: 0 0 0.5rem 0;
+  color: #374151;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Table Container */
+.table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+/* Material Table Customization */
+.timesheet-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mat-mdc-header-cell {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+  padding: 16px 12px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.mat-mdc-cell {
+  text-align: center;
+  padding: 16px 12px;
+  color: #6b7280;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.mat-mdc-row:hover {
+  background-color: #f9fafb;
+}
+
+/* Worked Time and Break Duration Styling */
+.worked-time {
+  font-weight: 600;
+  color: #059669;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  background-color: #d1fae5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.break-duration {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  color: #d97706;
+  background-color: #fef3c7;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+/* Actions Column */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Material Button Overrides */
+.mat-mdc-icon-button {
+  transition: all 0.2s ease;
+}
+
+.mat-mdc-icon-button:hover {
+  transform: scale(1.05);
+}
+
+.mat-mdc-icon-button.mat-primary {
+  color: #3b82f6;
+}
+
+.mat-mdc-icon-button.mat-warn {
+  color: #ef4444;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    padding: 12px 8px;
+    font-size: 0.875rem;
+  }
+  
+  .actions {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .mat-mdc-icon-button {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .worked-time,
+  .break-duration {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+  }
+}
+
+@media (max-width: 640px) {
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    padding: 8px 6px;
+    font-size: 0.75rem;
+  }
+  
+  .mat-mdc-icon-button {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* Table body should fill remaining space */
+.compact-table .mat-mdc-table-container {
+  flex: 1 !important;
+  overflow: auto !important;
+}
+
+.compact-table .mat-mdc-table-body-container {
+  flex: 1 !important;
+  overflow: auto !important;
+}
+
+/* Ensure table stretches to full height */
+::ng-deep .mat-mdc-table {
+  height: 100% !important;
+}
+
+::ng-deep .mat-mdc-table .mdc-data-table__table-container {
+  height: 100% !important;
+}
+
+/* Ensure fixed row heights regardless of content */
+::ng-deep .mat-mdc-table {
+  table-layout: fixed !important;
+}
+
+::ng-deep .mat-mdc-header-row {
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+}
+
+::ng-deep .mat-mdc-row {
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+}
+
+/* Empty rows should maintain the same height */
+::ng-deep .mat-mdc-row.opacity-0 {
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  visibility: hidden;
+}
+
+/* Prevent content from affecting row height */
+::ng-deep .mat-mdc-cell {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
