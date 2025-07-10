@@ -1,6 +1,6 @@
 //API Configuration
 export const API_CONFIG = {
-  // Base API URL - change this based on environment
+  // Base API URL
   BASE_URL: '/api',
   
   // API Endpoints
@@ -11,16 +11,15 @@ export const API_CONFIG = {
     VALIDATE: '/validate',
   },
   
-  // Request timeout in milliseconds
+  // Request timeout
   TIMEOUT: 30000,
   
   // Retry configuration
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000,
   
-  // Simple flags for development
-  ENABLE_MOCK_DATA: true,
-  ENABLE_LOGGING: true
+  // Simple flags
+  ENABLE_MOCK_DATA: true
 } as const;
 
 // Helper function to get full endpoint URL

@@ -9,8 +9,6 @@ export interface TimeEntry {
   startTime: string; // Format: "HH:mm"
   endTime: string;   // Format: "HH:mm"
   breakDuration: string; // Format: "HH:mm"
-  description?: string;
-  projectId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,8 +19,6 @@ export interface CreateTimeEntryRequest {
   startTime: string;
   endTime: string;
   breakDuration: string;
-  description?: string;
-  projectId?: string;
 }
 
 export interface UpdateTimeEntryRequest extends Partial<CreateTimeEntryRequest> {
@@ -33,7 +29,6 @@ export interface TimeEntryFilter {
   userId?: string;
   startDate?: Date;
   endDate?: Date;
-  projectId?: string;
 }
 
 export interface TimeEntryResponse {

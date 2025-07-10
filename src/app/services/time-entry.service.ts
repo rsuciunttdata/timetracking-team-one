@@ -50,9 +50,6 @@ export class TimeEntryService {
       if (filter.userId) {
         params = params.set('userId', filter.userId);
       }
-      if (filter.projectId) {
-        params = params.set('projectId', filter.projectId);
-      }
     }
 
     return this.http.get<ApiResponse<TimeEntryResponse>>(this.baseUrl, { params })
