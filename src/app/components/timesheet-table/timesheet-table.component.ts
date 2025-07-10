@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnChanges, signal, computed, inject, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -31,12 +31,16 @@ import { TimeEntryService } from '../../services/time-entry.service';
   templateUrl: './timesheet-table.component.html',
   styleUrls: ['./timesheet-table.component.css']
 })
-export class TimesheetTableComponent implements OnInit {
+export class TimesheetTableComponent implements OnInit, OnChanges {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
+  
+  // Inputs
+  @Input() dateFilter: { startDate: Date | null; endDate: Date | null } | null = null;
   
   // Outputs for parent communication
   @Output() editEntry = new EventEmitter<TimeEntry>();
   @Output() deleteEntry = new EventEmitter<TimeEntry>();
+  @Output() summaryData = new EventEmitter<{ totalEntries: number; totalHours: string }>();
   
   private timeEntryService = inject(TimeEntryService);
 
@@ -45,10 +49,36 @@ export class TimesheetTableComponent implements OnInit {
   private loading = signal<boolean>(false);
   private sortState = signal<Sort>({ active: '', direction: '' });
   private pageState = signal<PageEvent>({ pageIndex: 0, pageSize: 10, length: 0 });
+  private dateFilterSignal = signal<{ startDate: Date | null; endDate: Date | null } | null>(null);
 
   // Computed signals
-  sortedEntries = computed(() => {
+  filteredEntries = computed(() => {
     const entries = this.allEntries();
+    const filter = this.dateFilterSignal();
+    
+    if (!filter || (!filter.startDate && !filter.endDate)) {
+      return entries;
+    }
+    
+    return entries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      const start = filter.startDate;
+      const end = filter.endDate;
+      
+      if (start && end) {
+        return entryDate >= start && entryDate <= end;
+      } else if (start) {
+        return entryDate >= start;
+      } else if (end) {
+        return entryDate <= end;
+      }
+      
+      return true;
+    });
+  });
+
+  sortedEntries = computed(() => {
+    const entries = this.filteredEntries();
     const sort = this.sortState();
 
     if (!sort.active || sort.direction === '') {
@@ -78,26 +108,52 @@ export class TimesheetTableComponent implements OnInit {
     return entries.slice(startIndex, endIndex);
   });
 
-  // To always have the same number of rows in the table
   timeEntries = computed(() => {
     const entries = this.displayedEntries();
     const page = this.pageState();
     const emptyRows = Math.max(0, page.pageSize - entries.length);
     
-    // Add empty rows to maintain table size
     const emptyEntries = Array(emptyRows).fill(null);
     return [...entries, ...emptyEntries];
   });
 
   isLoading = computed(() => this.loading());
-  isEmpty = computed(() => !this.loading() && this.allEntries().length === 0);
-  totalEntries = computed(() => this.allEntries().length);
+  isEmpty = computed(() => !this.loading() && this.filteredEntries().length === 0);
+  totalEntries = computed(() => this.filteredEntries().length);
   currentPageSize = computed(() => this.pageState().pageSize);
   currentPageIndex = computed(() => this.pageState().pageIndex);
+
+  // Summary data computed signal
+  summaryInfo = computed(() => {
+    const entries = this.filteredEntries();
+    const totalEntries = entries.length;
+    
+    const totalMinutes = entries.reduce((total, entry) => {
+      const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
+      const [hours, minutes] = workedTime.split(':').map(Number);
+      return total + (hours * 60) + minutes;
+    }, 0);
+    
+    const totalHours = Math.floor(totalMinutes / 60);
+    const remainingMinutes = totalMinutes % 60;
+    const totalHoursFormatted = `${totalHours}:${remainingMinutes.toString().padStart(2, '0')}`;
+    
+    const summary = { totalEntries, totalHours: totalHoursFormatted };
+    
+    setTimeout(() => this.summaryData.emit(summary), 0);
+    
+    return summary;
+  });
 
   // Table configuration
   displayedColumns: string[] = ['date', 'startTime', 'endTime', 'breakDuration', 'totalWorkedTime', 'status', 'actions'];
   pageSizeOptions: number[] = [5, 10, 15];
+  ngOnChanges(): void {
+    if (this.dateFilter) {
+      this.dateFilterSignal.set(this.dateFilter);
+      setTimeout(() => this.summaryInfo(), 0);
+    }
+  }
 
   ngOnInit(): void {
     this.loadTimeEntries();
@@ -105,12 +161,13 @@ export class TimesheetTableComponent implements OnInit {
 
   private loadTimeEntries(): void {
     this.loading.set(true);
-    const pagination = { page: 1, pageSize: 100 }; // Load more entries for testing
+    const pagination = { page: 1, pageSize: 100 };
     
     this.timeEntryService.getTimeEntries(pagination).subscribe({
       next: (response) => {
         this.allEntries.set(response.data);
         this.loading.set(false);
+        this.summaryInfo();
       },
       error: (error) => {
         console.error('Error loading time entries:', error);
@@ -136,7 +193,6 @@ export class TimesheetTableComponent implements OnInit {
   }
 
   onAddEntry(): void {
-    // Emit event for parent component to handle
     console.log('Add entry clicked');
   }
 
@@ -171,13 +227,13 @@ export class TimesheetTableComponent implements OnInit {
     const [hours] = workedTime.split(':').map(Number);
     
     if (hours >= 8) {
-      return 'Complete';
+      return 'Full Day';
     } else if (hours >= 6) {
-      return 'Partial';
+      return 'Partial Day';
     } else if (hours > 0) {
-      return 'Minimal';
+      return 'Under Time';
     } else {
-      return 'Invalid';
+      return 'No Entry';
     }
   }
 
@@ -185,14 +241,14 @@ export class TimesheetTableComponent implements OnInit {
     const status = this.getStatusText(entry);
     
     switch (status) {
-      case 'Complete':
-        return 'bg-green-500 text-white';
-      case 'Partial':
-        return 'bg-yellow-500 text-white';
-      case 'Minimal':
-        return 'bg-orange-500 text-white';
-      case 'Invalid':
-        return 'bg-red-500 text-white';
+      case 'Full Day':
+        return 'status-full-day';
+      case 'Partial Day':
+        return 'status-partial-day';
+      case 'Under Time':
+        return 'status-under-time';
+      case 'No Entry':
+        return 'status-no-entry';
       default:
         return 'bg-gray-500 text-white';
     }
