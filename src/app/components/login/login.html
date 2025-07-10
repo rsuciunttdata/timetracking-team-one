@@ -1,29 +1,26 @@
-<div class="example-container">
-  <mat-form-field>
-    <mat-label>Enter your email</mat-label>
-    <input
-      matInput
-      placeholder="pat@example.com"
-      [formControl]="email"
-      (blur)="updateErrorMessage()"
-      required
-    />
-    @if (email.invalid) {
-      <mat-error>{{errorMessage()}}</mat-error>
-    }
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4 w-full max-w-sm bg-white p-6 rounded-2xl shadow mx-auto mt-10">
+  <mat-form-field appearance="fill" class="w-full">
+    <mat-label>Email</mat-label>
+    <input matInput placeholder="you@example.com" formControlName="email" required />
+    <mat-error *ngIf="form.get('email')?.hasError('required')">Email is required</mat-error>
+    <mat-error *ngIf="form.get('email')?.hasError('email')">Invalid email</mat-error>
   </mat-form-field>
 
-  <mat-form-field>
-    <mat-label>Enter your password</mat-label>
-    <input matInput [type]="hide() ? 'password' : 'text'" />
+  <mat-form-field appearance="fill" class="w-full">
+    <mat-label>Password</mat-label>
+    <input matInput [type]="hide() ? 'password' : 'text'" formControlName="password" required />
     <button
-      matIconButton
+      mat-icon-button
       matSuffix
       (click)="clickEvent($event)"
       [attr.aria-label]="'Hide password'"
       [attr.aria-pressed]="hide()"
+      type="button"
     >
-      <mat-icon>{{hide() ? 'visibility_off' : 'visibility'}}</mat-icon>
+      <mat-icon>{{ hide() ? 'visibility_off' : 'visibility' }}</mat-icon>
     </button>
+    <mat-error *ngIf="form.get('password')?.hasError('required')">Password is required</mat-error>
   </mat-form-field>
-</div>
+
+  <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded w-full">Login</button>
+</form>
