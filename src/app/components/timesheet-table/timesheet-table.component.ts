@@ -60,7 +60,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
       return entries;
     }
     
-    return entries.filter(entry => {
+    const filteredRealEntries = entries.filter(entry => {
       const entryDate = new Date(entry.date);
       const start = filter.startDate;
       const end = filter.endDate;
@@ -75,6 +75,32 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
       
       return true;
     });
+
+    // Generate placeholder entries for missing dates in the range
+    if (filter.startDate && filter.endDate) {
+      const allDatesInRange = this.generateDateRange(filter.startDate, filter.endDate);
+      const existingDates = new Set(filteredRealEntries.map(entry => 
+        new Date(entry.date).toDateString()
+      ));
+      
+      const placeholderEntries: TimeEntry[] = allDatesInRange
+        .filter((date: Date) => !existingDates.has(date.toDateString()))
+        .map((date: Date) => ({
+          id: `placeholder-${date.toISOString()}`,
+          userId: 'current-user',
+          date: date,
+          startTime: '',
+          endTime: '',
+          breakDuration: '',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }));
+      
+      return [...filteredRealEntries, ...placeholderEntries]
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }
+    
+    return filteredRealEntries;
   });
 
   sortedEntries = computed(() => {
@@ -196,6 +222,12 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     console.log('Add entry clicked');
   }
 
+  onAddEntryForDate(date: Date): void {
+    // Emit an event to the parent to open add modal with pre-filled date
+    console.log('Add entry for date:', date);
+    // TODO: Emit event to parent component to open add modal with the specific date
+  }
+
   formatDate(date: Date): string {
     return new Intl.DateTimeFormat('en-US', {
       weekday: 'short',
@@ -252,6 +284,23 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
       default:
         return 'bg-gray-500 text-white';
     }
+  }
+
+  isPlaceholderEntry(entry: TimeEntry): boolean {
+    return entry.id.startsWith('placeholder-');
+  }
+
+  private generateDateRange(startDate: Date, endDate: Date): Date[] {
+    const dates: Date[] = [];
+    const currentDate = new Date(startDate);
+    const end = new Date(endDate);
+    
+    while (currentDate <= end) {
+      dates.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return dates;
   }
 
   private parseTime(timeString: string): number {
