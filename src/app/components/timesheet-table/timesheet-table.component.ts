@@ -286,8 +286,18 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     }
   }
 
-  isPlaceholderEntry(entry: TimeEntry): boolean {
-    return entry.id.startsWith('placeholder-');
+  isPlaceholderEntry(entry: TimeEntry | null): boolean {
+    return entry !== null && !entry.id;
+  }
+
+  isWeekendDay(date: Date): boolean {
+    const dayOfWeek = date.getDay();
+    return dayOfWeek === 0 || dayOfWeek === 6;
+  }
+
+  shouldDisableActions(entry: TimeEntry | null): boolean {
+    if (!entry) return true;
+    return this.isWeekendDay(entry.date);
   }
 
   private generateDateRange(startDate: Date, endDate: Date): Date[] {

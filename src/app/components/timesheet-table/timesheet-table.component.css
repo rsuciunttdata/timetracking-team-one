@@ -239,6 +239,22 @@
   font-weight: 500 !important;
 }
 
+/* Weekend styling */
+.weekend-row {
+  background-color: #f8fafc !important;
+  border-left: 3px solid #e2e8f0 !important;
+}
+
+.weekend-row:hover {
+  background-color: #f1f5f9 !important;
+}
+
+/* Disabled button styling for weekends */
+.mat-mdc-icon-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .mat-mdc-header-cell,
