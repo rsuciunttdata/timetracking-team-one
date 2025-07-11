@@ -45,7 +45,7 @@ export class Login {
       const success = this.auth.login(email, password);
 
       if (success) {
-        this.router.navigate(['/not-found']); //trebuie adaugata ruta catre pagina cu tabela
+        this.router.navigate(['/timesheet']); //trebuie adaugata ruta catre pagina cu tabela
       } else {
         alert('Email sau parola gresita');
       }
