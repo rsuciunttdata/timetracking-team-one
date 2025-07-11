@@ -53,5 +53,4 @@ export class Login {
       this.form.markAllAsTouched();
     }
   }
-  //test
 }
