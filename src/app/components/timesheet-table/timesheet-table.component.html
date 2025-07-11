@@ -57,9 +57,14 @@
         <th mat-header-cell *matHeaderCellDef mat-sort-header="date">
           Date
         </th>
-        <td mat-cell *matCellDef="let entry">
+        <td mat-cell *matCellDef="let entry" [class.weekend-row]="entry && isWeekendDay(entry.date)">
           @if (entry) {
-            <span class="font-medium">{{ formatDate(entry.date) }}</span>
+            <div class="flex items-center gap-2">
+              <span class="font-medium">{{ formatDate(entry.date) }}</span>
+              @if (isWeekendDay(entry.date)) {
+                <mat-icon class="text-gray-400 text-sm" matTooltip="Weekend">weekend</mat-icon>
+              }
+            </div>
           }
         </td>
       </ng-container>
@@ -70,8 +75,10 @@
           Start Time
         </th>
         <td mat-cell *matCellDef="let entry">
-          @if (entry) {
+          @if (entry && !isPlaceholderEntry(entry)) {
             <span class="font-mono text-sm">{{ entry.startTime }}</span>
+          } @else if (entry && isPlaceholderEntry(entry)) {
+            <span class="text-gray-400 text-sm italic">No entry</span>
           }
         </td>
       </ng-container>
@@ -82,8 +89,10 @@
           End Time
         </th>
         <td mat-cell *matCellDef="let entry">
-          @if (entry) {
+          @if (entry && !isPlaceholderEntry(entry)) {
             <span class="font-mono text-sm">{{ entry.endTime }}</span>
+          } @else if (entry && isPlaceholderEntry(entry)) {
+            <span class="text-gray-400 text-sm italic">No entry</span>
           }
         </td>
       </ng-container>
@@ -94,8 +103,10 @@
           Break Duration
         </th>
         <td mat-cell *matCellDef="let entry">
-          @if (entry) {
+          @if (entry && !isPlaceholderEntry(entry)) {
             <span class="font-mono text-sm text-amber-600">{{ entry.breakDuration }}</span>
+          } @else if (entry && isPlaceholderEntry(entry)) {
+            <span class="text-gray-400 text-sm italic">No entry</span>
           }
         </td>
       </ng-container>
@@ -106,10 +117,12 @@
           Total Worked
         </th>
         <td mat-cell *matCellDef="let entry">
-          @if (entry) {
+          @if (entry && !isPlaceholderEntry(entry)) {
             <span class="font-mono text-sm font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">
               {{ calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration) }}
             </span>
+          } @else if (entry && isPlaceholderEntry(entry)) {
+            <span class="text-gray-400 text-sm italic">0:00</span>
           }
         </td>
       </ng-container>
@@ -120,9 +133,13 @@
           Status
         </th>
         <td mat-cell *matCellDef="let entry">
-          @if (entry) {
+          @if (entry && !isPlaceholderEntry(entry)) {
             <mat-chip [class]="getStatusClass(entry)" class="text-xs font-medium">
               {{ getStatusText(entry) }}
+            </mat-chip>
+          } @else if (entry && isPlaceholderEntry(entry)) {
+            <mat-chip class="status-no-entry text-xs font-medium">
+              No Entry
             </mat-chip>
           }
         </td>
@@ -134,24 +151,41 @@
           Actions
         </th>
         <td mat-cell *matCellDef="let entry">
-          @if (entry) {
+          @if (entry && !isPlaceholderEntry(entry)) {
             <div class="flex gap-1 justify-center">
               <button 
                 mat-icon-button 
                 color="primary"
+                [disabled]="shouldDisableActions(entry)"
                 (click)="onEditEntry(entry)"
-                matTooltip="Edit entry"
+                [matTooltip]="shouldDisableActions(entry) ? 'Weekend entries cannot be edited' : 'Edit entry'"
                 class="hover:shadow-sm">
                 <mat-icon class="text-lg">edit</mat-icon>
               </button>
               <button 
                 mat-icon-button 
                 color="warn"
+                [disabled]="shouldDisableActions(entry)"
                 (click)="onDeleteEntry(entry)"
-                matTooltip="Delete entry"
+                [matTooltip]="shouldDisableActions(entry) ? 'Weekend entries cannot be deleted' : 'Delete entry'"
                 class="hover:shadow-sm">
                 <mat-icon class="text-lg">delete</mat-icon>
               </button>
+            </div>
+          } @else if (entry && isPlaceholderEntry(entry)) {
+            <div class="flex gap-1 justify-center">
+              @if (!shouldDisableActions(entry)) {
+                <button 
+                  mat-icon-button 
+                  color="primary"
+                  (click)="onAddEntryForDate(entry.date)"
+                  matTooltip="Add entry for this date"
+                  class="hover:shadow-sm">
+                  <mat-icon class="text-lg">add</mat-icon>
+                </button>
+              } @else {
+                <span class="text-gray-400 text-sm italic px-2">Weekend</span>
+              }
             </div>
           }
         </td>

@@ -209,6 +209,52 @@
   color: #ef4444;
 }
 
+/* Status Chip Colors */
+.status-full-day {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+.status-partial-day {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.status-under-time {
+  background-color: #f59e0b !important;
+  color: white !important;
+}
+
+.status-no-entry {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+/* Override Material Chip defaults */
+.mat-mdc-chip.status-full-day,
+.mat-mdc-chip.status-partial-day,
+.mat-mdc-chip.status-under-time,
+.mat-mdc-chip.status-no-entry {
+  border: none !important;
+  font-weight: 500 !important;
+}
+
+/* Weekend styling */
+.weekend-row {
+  background-color: #f8fafc !important;
+  border-left: 3px solid #e2e8f0 !important;
+}
+
+.weekend-row:hover {
+  background-color: #f1f5f9 !important;
+}
+
+/* Disabled button styling for weekends */
+.mat-mdc-icon-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .mat-mdc-header-cell,

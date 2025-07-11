@@ -1,5 +1,6 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,7 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
-import { FormsModule } from '@angular/forms';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 
 import { TimesheetTableComponent } from '../components/timesheet-table/timesheet-table.component';
 import { TimeEntryService } from '../services/time-entry.service';
@@ -30,6 +31,7 @@ import { TimeEntry } from '../interfaces/time-entry.interface';
     MatInputModule,
     MatNativeDateModule,
     MatSnackBarModule,
+    MatDialogModule,
     TimesheetTableComponent
   ],
   templateUrl: './timesheet-page.component.html',
@@ -38,72 +40,54 @@ import { TimeEntry } from '../interfaces/time-entry.interface';
 export class TimesheetPageComponent implements OnInit {
   private timeEntryService = inject(TimeEntryService);
   private snackBar = inject(MatSnackBar);
-  private cdr = inject(ChangeDetectorRef);
+  private dialog = inject(MatDialog);
 
-  timeEntries: TimeEntry[] = [];
-  filteredTimeEntries: TimeEntry[] = [];
-  totalEntries: number = 0;
-  isLoading: boolean = false;
-  
-  // Date range filters
-  startDate: Date | null = null;
-  endDate: Date | null = null;
+  // Signals for reactive state management
+  private startDateSignal = signal<Date | null>(null);
+  private endDateSignal = signal<Date | null>(null);
+  private summaryDataSignal = signal<{ totalEntries: number; totalHours: string }>({ totalEntries: 0, totalHours: '0:00' });
+
+  // Computed signals
+  dateFilter = computed(() => ({
+    startDate: this.startDateSignal(),
+    endDate: this.endDateSignal()
+  }));
+
+  // Getters for template binding
+  get startDate(): Date | null {
+    return this.startDateSignal();
+  }
+
+  set startDate(value: Date | null) {
+    this.startDateSignal.set(value);
+  }
+
+  get endDate(): Date | null {
+    return this.endDateSignal();
+  }
+
+  set endDate(value: Date | null) {
+    this.endDateSignal.set(value);
+  }
 
   ngOnInit(): void {
     this.setDefaultDateRange();
-    setTimeout(() => {
-      this.loadTimeEntries();
-    }, 0);
   }
 
   private setDefaultDateRange(): void {
     const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    this.startDate = startOfMonth;
-    this.endDate = today;
-  }
-
-  loadTimeEntries(): void {
-    this.isLoading = true;
-    this.cdr.detectChanges(); // Force change detection
-    
-    const pagination = { page: 1, pageSize: 100 };
-    
-    console.log('🔍 Making API call to:', this.timeEntryService);
-    
-    this.timeEntryService.getTimeEntries(pagination).subscribe({
-      next: (response) => {
-        console.log('✅ Received response:', response);
-        this.timeEntries = response.data;
-        this.totalEntries = response.total;
-        this.applyDateFilter();
-        this.isLoading = false;
-        this.cdr.detectChanges(); // Force change detection
-      },
-      error: (error) => {
-        console.error('❌ Error loading time entries:', error);
-        this.snackBar.open('Error loading time entries', 'Close', { duration: 3000 });
-        this.isLoading = false;
-        this.cdr.detectChanges(); // Force change detection
-      }
-    });
-  }
-
-  applyDateFilter(): void {
-    if (!this.startDate || !this.endDate) {
-      this.filteredTimeEntries = [...this.timeEntries];
-      return;
-    }
-
-    this.filteredTimeEntries = this.timeEntries.filter(entry => {
-      const entryDate = new Date(entry.date);
-      return entryDate >= this.startDate! && entryDate <= this.endDate!;
-    });
+    this.startDateSignal.set(today);
+    this.endDateSignal.set(today);
   }
 
   onDateRangeChange(): void {
-    this.applyDateFilter();
+    // The table will automatically react to the dateFilter computed signal
+    console.log('Date range changed:', this.dateFilter());
+  }
+
+  clearDateFilters(): void {
+    this.startDateSignal.set(null);
+    this.endDateSignal.set(null);
   }
 
   onEditEntry(entry: TimeEntry): void {
@@ -115,7 +99,6 @@ export class TimesheetPageComponent implements OnInit {
     if (confirm('Are you sure you want to delete this time entry?')) {
       this.timeEntryService.deleteTimeEntry(entry.id).subscribe({
         next: () => {
-          this.loadTimeEntries();
           this.snackBar.open('Time entry deleted successfully', 'Close', { duration: 3000 });
         },
         error: (error) => {
@@ -131,32 +114,17 @@ export class TimesheetPageComponent implements OnInit {
     this.snackBar.open('Add new entry dialog will open here', 'Close', { duration: 2000 });
   }
 
+  // Methods to handle summary data from table
+  onSummaryDataReceived(summary: { totalEntries: number; totalHours: string }): void {
+    this.summaryDataSignal.set(summary);
+  }
+
+  // Expose summary data for template
+  get filteredTimeEntries(): { length: number } {
+    return { length: this.summaryDataSignal().totalEntries };
+  }
+
   getTotalWorkedHours(): string {
-    const totalMinutes = this.filteredTimeEntries.reduce((total, entry) => {
-      const workedTime = this.calculateWorkedTime(entry);
-      const [hours, minutes] = workedTime.split(':').map(Number);
-      return total + (hours * 60) + minutes;
-    }, 0);
-
-    const hours = Math.floor(totalMinutes / 60);
-    const mins = totalMinutes % 60;
-    return `${hours}:${mins.toString().padStart(2, '0')}`;
-  }
-
-  private calculateWorkedTime(entry: TimeEntry): string {
-    const startTime = this.timeStringToMinutes(entry.startTime);
-    const endTime = this.timeStringToMinutes(entry.endTime);
-    const breakMinutes = this.timeStringToMinutes(entry.breakDuration);
-    
-    const totalMinutes = endTime - startTime - breakMinutes;
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    
-    return `${hours}:${minutes.toString().padStart(2, '0')}`;
-  }
-
-  private timeStringToMinutes(timeString: string): number {
-    const [hours, minutes] = timeString.split(':').map(Number);
-    return (hours * 60) + minutes;
+    return this.summaryDataSignal().totalHours;
   }
 }
