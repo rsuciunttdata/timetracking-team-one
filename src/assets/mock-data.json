@@ -1,0 +1,204 @@
+{
+  "timeEntries": [
+   {
+    "id": "1",
+    "userId": "user1",
+    "date": "2025-07-01T00:00:00.000Z",
+    "startTime": "09:00",
+    "endTime": "17:30",
+    "breakDuration": "00:30",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "userId": "user1",
+    "date": "2025-07-02T00:00:00.000Z",
+    "startTime": "08:30",
+    "endTime": "17:00",
+    "breakDuration": "00:45",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "3",
+    "userId": "user1",
+    "date": "2025-07-03T00:00:00.000Z",
+    "startTime": "09:15",
+    "endTime": "18:00",
+    "breakDuration": "01:00",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "4",
+    "userId": "user1",
+    "date": "2025-07-04T00:00:00.000Z",
+    "startTime": "08:45",
+    "endTime": "17:15",
+    "breakDuration": "00:30",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "5",
+    "userId": "user1",
+    "date": "2025-07-07T00:00:00.000Z",
+    "startTime": "09:00",
+    "endTime": "18:30",
+    "breakDuration": "01:15",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "6",
+    "userId": "user1",
+    "date": "2025-07-08T00:00:00.000Z",
+    "startTime": "08:00",
+    "endTime": "16:30",
+    "breakDuration": "00:30",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "7",
+    "userId": "user1",
+    "date": "2025-07-09T00:00:00.000Z",
+    "startTime": "09:30",
+    "endTime": "18:00",
+    "breakDuration": "01:00",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "8",
+    "userId": "user1",
+    "date": "2025-07-10T00:00:00.000Z",
+    "startTime": "08:15",
+    "endTime": "17:45",
+    "breakDuration": "00:45",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "9",
+    "userId": "user1",
+    "date": "2025-07-11T00:00:00.000Z",
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "breakDuration": "01:00",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "10",
+    "userId": "user1",
+    "date": "2025-07-14T00:00:00.000Z",
+    "startTime": "08:30",
+    "endTime": "18:15",
+    "breakDuration": "01:30",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "11",
+    "userId": "user1",
+    "date": "2025-07-15T00:00:00.000Z",
+    "startTime": "09:45",
+    "endTime": "17:30",
+    "breakDuration": "00:45",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "12",
+    "userId": "user1",
+    "date": "2025-07-16T00:00:00.000Z",
+    "startTime": "08:00",
+    "endTime": "16:00",
+    "breakDuration": "00:30",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "13",
+    "userId": "user1",
+    "date": "2025-07-17T00:00:00.000Z",
+    "startTime": "09:15",
+    "endTime": "18:45",
+    "breakDuration": "01:15",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "14",
+    "userId": "user1",
+    "date": "2025-07-18T00:00:00.000Z",
+    "startTime": "08:30",
+    "endTime": "17:00",
+    "breakDuration": "00:30",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "15",
+    "userId": "user1",
+    "date": "2025-07-21T00:00:00.000Z",
+    "startTime": "09:00",
+    "endTime": "17:30",
+    "breakDuration": "01:00",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "16",
+    "userId": "user1",
+    "date": "2025-07-22T00:00:00.000Z",
+    "startTime": "08:45",
+    "endTime": "17:15",
+    "breakDuration": "00:30",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "17",
+    "userId": "user1",
+    "date": "2025-07-23T00:00:00.000Z",
+    "startTime": "09:20",
+    "endTime": "18:00",
+    "breakDuration": "00:40",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "18",
+    "userId": "user1",
+    "date": "2025-07-24T00:00:00.000Z",
+    "startTime": "08:00",
+    "endTime": "16:30",
+    "breakDuration": "00:30",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "19",
+    "userId": "user1",
+    "date": "2025-07-25T00:00:00.000Z",
+    "startTime": "09:30",
+    "endTime": "18:30",
+    "breakDuration": "01:00",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  },
+  {
+    "id": "20",
+    "userId": "user1",
+    "date": "2025-07-28T00:00:00.000Z",
+    "startTime": "08:15",
+    "endTime": "17:45",
+    "breakDuration": "01:15",
+    "createdAt": "2025-07-09T00:00:00.000Z",
+    "updatedAt": "2025-07-09T00:00:00.000Z"
+  }
+  ]
+}
