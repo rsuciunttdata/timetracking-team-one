@@ -1,20 +1,26 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 
 @Injectable({
     providedIn: 'root',
 })
 export class AuthService {
-    private isAuthenticated = false; // mock logic
+    isLoggedIn = signal(false);
 
-    login() {
-        this.isAuthenticated = true;
+    login(email: string, password: string): boolean {
+        if (email === 'admin@test.com' && password === '123456') {
+            this.isLoggedIn.set(true);
+            return true;
+        }
+
+        this.isLoggedIn.set(false);
+        return false;
     }
 
     logout() {
-        this.isAuthenticated = false;
+        this.isLoggedIn.set(false);
     }
 
-    isLoggedIn(): boolean {
-        return this.isAuthenticated;
+    isAuthenticated(): boolean {
+        return this.isLoggedIn();
     }
 }
