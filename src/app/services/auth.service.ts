@@ -6,14 +6,19 @@ import { Injectable, signal } from '@angular/core';
 export class AuthService {
     isLoggedIn = signal(false);
 
-    login(email: string, password: string): boolean {
-        if (email === 'admin@test.com' && password === '123456') {
-            this.isLoggedIn.set(true);
-            return true;
+    login(email: string, password: string): 'success' | 'invalid_email' | 'invalid_password' {
+        const validEmail = 'admin@test.com';
+        const validPassword = '123456';
+
+        if (email !== validEmail) {
+            return 'invalid_email';
         }
 
-        this.isLoggedIn.set(false);
-        return false;
+        if (password !== validPassword) {
+            return 'invalid_password';
+        }
+
+        return 'success';
     }
 
     logout() {
