@@ -43,25 +43,26 @@ export class Login {
   onSubmit() {
     if (this.form.valid) {
       const { email, password } = this.form.value;
-      const result = this.auth.login(email, password);
 
-      switch (result) {
-        case 'success':
-          this.router.navigate(['/timesheet']);
-          break;
+      this.auth.login(email, password).subscribe(result => {
+        switch (result) {
+          case 'success':
+            this.router.navigate(['/timesheet']);
+            break;
 
-        case 'invalid_email':
-          this.errorMessage.set('Wrong email!');
-          break;
+          case 'invalid_email':
+            this.errorMessage.set('Wrong email!');
+            break;
 
-        case 'invalid_password':
-          this.errorMessage.set('Wrong password!');
-          break;
-      }
+          case 'invalid_password':
+            this.errorMessage.set('Wrong password!');
+            break;
+        }
 
-      if (result !== 'success') {
-        setTimeout(() => this.errorMessage.set(''), 5000);
-      }
+        if (result !== 'success') {
+          setTimeout(() => this.errorMessage.set(''), 5000);
+        }
+      });
 
     } else {
       this.form.markAllAsTouched();

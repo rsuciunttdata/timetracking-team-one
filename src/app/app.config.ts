@@ -5,6 +5,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { routes } from './app.routes';
 import { mockDataInterceptorFn } from './interceptors/mock-data.interceptor';
+import { authMockInterceptor } from './interceptors/auth-mock.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -12,7 +13,7 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(
-      withInterceptors([mockDataInterceptorFn])
+      withInterceptors([mockDataInterceptorFn, authMockInterceptor])
     ),
     provideAnimations()
   ]
