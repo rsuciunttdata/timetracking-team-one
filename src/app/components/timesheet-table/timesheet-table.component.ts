@@ -40,6 +40,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   // Outputs for parent communication
   @Output() editEntry = new EventEmitter<TimeEntry>();
   @Output() deleteEntry = new EventEmitter<TimeEntry>();
+  @Output() addEntry = new EventEmitter<void>();
   @Output() summaryData = new EventEmitter<{ totalEntries: number; totalHours: string }>();
   
   private timeEntryService = inject(TimeEntryService);
@@ -219,14 +220,9 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   }
 
   onAddEntry(): void {
-    console.log('Add entry clicked');
+    this.addEntry.emit();
   }
 
-  onAddEntryForDate(date: Date): void {
-    // Emit an event to the parent to open add modal with pre-filled date
-    console.log('Add entry for date:', date);
-    // TODO: Emit event to parent component to open add modal with the specific date
-  }
 
   formatDate(date: Date): string {
     return new Intl.DateTimeFormat('en-US', {

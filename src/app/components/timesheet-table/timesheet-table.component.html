@@ -174,18 +174,9 @@
             </div>
           } @else if (entry && isPlaceholderEntry(entry)) {
             <div class="flex gap-1 justify-center">
-              @if (!shouldDisableActions(entry)) {
-                <button 
-                  mat-icon-button 
-                  color="primary"
-                  (click)="onAddEntryForDate(entry.date)"
-                  matTooltip="Add entry for this date"
-                  class="hover:shadow-sm">
-                  <mat-icon class="text-lg">add</mat-icon>
-                </button>
-              } @else {
-                <span class="text-gray-400 text-sm italic px-2">Weekend</span>
-              }
+              @if (shouldDisableActions(entry)) {
+<span class="text-gray-400 text-sm italic px-2">Weekend</span>
+          } 
             </div>
           }
         </td>

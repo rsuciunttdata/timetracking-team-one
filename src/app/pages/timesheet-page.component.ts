@@ -13,6 +13,8 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 
 import { TimesheetTableComponent } from '../components/timesheet-table/timesheet-table.component';
+import { AddModal } from '../components/modal/add-modal/add-modal';
+import { EditModal } from '../components/modal/edit-modal/edit-modal';
 import { TimeEntryService } from '../services/time-entry.service';
 import { TimeEntry } from '../interfaces/time-entry.interface';
 
@@ -81,7 +83,6 @@ export class TimesheetPageComponent implements OnInit {
   }
 
   onDateRangeChange(): void {
-    // The table will automatically react to the dateFilter computed signal
     console.log('Date range changed:', this.dateFilter());
   }
 
@@ -91,8 +92,40 @@ export class TimesheetPageComponent implements OnInit {
   }
 
   onEditEntry(entry: TimeEntry): void {
-    // TODO: Open edit dialog
-    this.snackBar.open(`Edit entry for ${entry.date}`, 'Close', { duration: 2000 });
+    const dialogRef = this.dialog.open(EditModal, {
+      width: '500px',
+      maxWidth: '90vw',
+      data: { timeEntry: entry },
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (result.delete) {
+          // Handle delete action
+          this.timeEntryService.deleteTimeEntry(result.id).subscribe({
+            next: () => {
+              this.snackBar.open('Time entry deleted successfully', 'Close', { duration: 3000 });
+            },
+            error: (error) => {
+              console.error('Error deleting time entry:', error);
+              this.snackBar.open('Error deleting time entry', 'Close', { duration: 3000 });
+            }
+          });
+        } else {
+          // Handle update action
+          this.timeEntryService.updateTimeEntry(result).subscribe({
+            next: () => {
+              this.snackBar.open('Time entry updated successfully', 'Close', { duration: 3000 });
+            },
+            error: (error) => {
+              console.error('Error updating time entry:', error);
+              this.snackBar.open('Error updating time entry', 'Close', { duration: 3000 });
+            }
+          });
+        }
+      }
+    });
   }
 
   onDeleteEntry(entry: TimeEntry): void {
@@ -110,9 +143,31 @@ export class TimesheetPageComponent implements OnInit {
   }
 
   onAddNewEntry(): void {
-    // TODO: Open add dialog
-    this.snackBar.open('Add new entry dialog will open here', 'Close', { duration: 2000 });
+    const dialogRef = this.dialog.open(AddModal, {
+      width: '500px',
+      maxWidth: '90vw',
+      data: { 
+        prefilledDate: new Date(),
+        userId: 'current-user' // This should come from auth service
+      },
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.timeEntryService.createTimeEntry(result).subscribe({
+          next: () => {
+            this.snackBar.open('Time entry created successfully', 'Close', { duration: 3000 });
+          },
+          error: (error) => {
+            console.error('Error creating time entry:', error);
+            this.snackBar.open('Error creating time entry', 'Close', { duration: 3000 });
+          }
+        });
+      }
+    });
   }
+
 
   // Methods to handle summary data from table
   onSummaryDataReceived(summary: { totalEntries: number; totalHours: string }): void {
