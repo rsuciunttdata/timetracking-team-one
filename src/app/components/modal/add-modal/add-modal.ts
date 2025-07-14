@@ -11,6 +11,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { CreateTimeEntryRequest } from '../../../interfaces/time-entry.interface';
+import { TimeEntryService } from '../../../services/time-entry.service';
 
 interface AddModalData {
   prefilledDate?: Date;
@@ -39,6 +40,7 @@ export class AddModal implements OnInit {
   private dialogRef = inject(MatDialogRef<AddModal>);
   private fb = inject(FormBuilder);
   private data = inject(MAT_DIALOG_DATA) as AddModalData;
+  private timeEntryService = inject(TimeEntryService);
 
   // Form and signals
   timeEntryForm!: FormGroup;
@@ -113,11 +115,18 @@ export class AddModal implements OnInit {
         breakDuration: formValue.breakDuration
       };
 
-      // Simulate API call delay
-      setTimeout(() => {
-        this.submitting.set(false);
-        this.dialogRef.close(timeEntry);
-      }, 500);
+      // Use the actual service to make HTTP request
+      this.timeEntryService.createTimeEntry(timeEntry).subscribe({
+        next: (createdEntry) => {
+          this.submitting.set(false);
+          this.dialogRef.close(createdEntry);
+        },
+        error: (error) => {
+          console.error('Error creating time entry:', error);
+          this.submitting.set(false);
+          // Could show error message to user here
+        }
+      });
     }
   }
 

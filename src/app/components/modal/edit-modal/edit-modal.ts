@@ -11,6 +11,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { TimeEntry, UpdateTimeEntryRequest } from '../../../interfaces/time-entry.interface';
+import { TimeEntryService } from '../../../services/time-entry.service';
 
 interface EditModalData {
   timeEntry: TimeEntry;
@@ -38,6 +39,7 @@ export class EditModal implements OnInit {
   private dialogRef = inject(MatDialogRef<EditModal>);
   private fb = inject(FormBuilder);
   private data = inject(MAT_DIALOG_DATA) as EditModalData;
+  private timeEntryService = inject(TimeEntryService);
 
   // Form and signals
   timeEntryForm!: FormGroup;
@@ -111,11 +113,18 @@ export class EditModal implements OnInit {
         breakDuration: formValue.breakDuration
       };
 
-      // Simulate API call delay
-      setTimeout(() => {
-        this.submitting.set(false);
-        this.dialogRef.close(timeEntry);
-      }, 500);
+      // Use the actual service to make HTTP request
+      this.timeEntryService.updateTimeEntry(timeEntry).subscribe({
+        next: (updatedEntry) => {
+          this.submitting.set(false);
+          this.dialogRef.close(updatedEntry);
+        },
+        error: (error) => {
+          console.error('Error updating time entry:', error);
+          this.submitting.set(false);
+          // Could show error message to user here
+        }
+      });
     }
   }
 
@@ -125,7 +134,20 @@ export class EditModal implements OnInit {
 
   onDelete(): void {
     if (confirm('Are you sure you want to delete this time entry?')) {
-      this.dialogRef.close({ delete: true, id: this.data.timeEntry.id });
+      this.submitting.set(true);
+      
+      // Use the actual service to make HTTP request
+      this.timeEntryService.deleteTimeEntry(this.data.timeEntry.id).subscribe({
+        next: () => {
+          this.submitting.set(false);
+          this.dialogRef.close({ delete: true, id: this.data.timeEntry.id });
+        },
+        error: (error) => {
+          console.error('Error deleting time entry:', error);
+          this.submitting.set(false);
+          // Could show error message to user here
+        }
+      });
     }
   }
 
