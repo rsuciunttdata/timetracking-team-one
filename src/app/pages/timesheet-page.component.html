@@ -63,7 +63,8 @@
           [dateFilter]="dateFilter()"
           (summaryData)="onSummaryDataReceived($event)"
           (editEntry)="onEditEntry($event)"
-          (deleteEntry)="onDeleteEntry($event)">
+          (deleteEntry)="onDeleteEntry($event)"
+          (addEntry)="onAddNewEntry()">
         </app-timesheet-table>
       </mat-card-content>
     </mat-card>
