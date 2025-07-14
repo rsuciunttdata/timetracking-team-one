@@ -1,26 +1,33 @@
 import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { API_CONFIG, getApiUrl } from '../config/api.config';
+import { Observable, map } from 'rxjs';
 
 @Injectable({
-    providedIn: 'root',
+  providedIn: 'root',
 })
 export class AuthService {
-    isLoggedIn = signal(false);
+  isLoggedIn = signal(false);
 
-    login(email: string, password: string): boolean {
-        if (email === 'admin@test.com' && password === '123456') {
-            this.isLoggedIn.set(true);
-            return true;
+  constructor(private http: HttpClient) {}
+
+  login(email: string, password: string): Observable<'success' | 'invalid_email' | 'invalid_password'> {
+    return this.http.post<any>(getApiUrl('AUTH'), { email, password }).pipe(
+      map(response => {
+        if (response.success) {
+          this.isLoggedIn.set(true);
+          return 'success';
         }
+        return response.errorCode as 'invalid_email' | 'invalid_password';
+      })
+    );
+  }
 
-        this.isLoggedIn.set(false);
-        return false;
-    }
+  logout() {
+    this.isLoggedIn.set(false);
+  }
 
-    logout() {
-        this.isLoggedIn.set(false);
-    }
-
-    isAuthenticated(): boolean {
-        return this.isLoggedIn();
-    }
+  isAuthenticated(): boolean {
+    return this.isLoggedIn();
+  }
 }

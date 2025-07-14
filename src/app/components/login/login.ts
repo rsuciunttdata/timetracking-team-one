@@ -26,6 +26,7 @@ import { AuthService } from '../../services/auth.service';
 export class Login {
   form: FormGroup;
   hide = signal(true);
+  errorMessage = signal('');
 
   constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {
     this.form = this.fb.group({
@@ -42,13 +43,27 @@ export class Login {
   onSubmit() {
     if (this.form.valid) {
       const { email, password } = this.form.value;
-      const success = this.auth.login(email, password);
 
-      if (success) {
-        this.router.navigate(['/not-found']); //trebuie adaugata ruta catre pagina cu tabela
-      } else {
-        alert('Email sau parola gresita');
-      }
+      this.auth.login(email, password).subscribe(result => {
+        switch (result) {
+          case 'success':
+            this.router.navigate(['/timesheet']);
+            break;
+
+          case 'invalid_email':
+            this.errorMessage.set('Wrong email!');
+            break;
+
+          case 'invalid_password':
+            this.errorMessage.set('Wrong password!');
+            break;
+        }
+
+        if (result !== 'success') {
+          setTimeout(() => this.errorMessage.set(''), 5000);
+        }
+      });
+
     } else {
       this.form.markAllAsTouched();
     }
