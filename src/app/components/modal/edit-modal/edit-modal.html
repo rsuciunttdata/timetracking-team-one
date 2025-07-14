@@ -108,7 +108,6 @@
                 color="primary"
                 type="button"
                 (click)="onSave()"
-                [disabled]="!isFormValid() || isSubmitting()"
                 class="save-button">
           @if (isSubmitting()) {
             <mat-spinner diameter="16" style="color: white;"></mat-spinner>

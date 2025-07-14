@@ -102,27 +102,9 @@ export class TimesheetPageComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         if (result.delete) {
-          // Handle delete action
-          this.timeEntryService.deleteTimeEntry(result.id).subscribe({
-            next: () => {
-              this.snackBar.open('Time entry deleted successfully', 'Close', { duration: 3000 });
-            },
-            error: (error) => {
-              console.error('Error deleting time entry:', error);
-              this.snackBar.open('Error deleting time entry', 'Close', { duration: 3000 });
-            }
-          });
+          this.snackBar.open('Time entry deleted successfully', 'Close', { duration: 3000 });
         } else {
-          // Handle update action
-          this.timeEntryService.updateTimeEntry(result).subscribe({
-            next: () => {
-              this.snackBar.open('Time entry updated successfully', 'Close', { duration: 3000 });
-            },
-            error: (error) => {
-              console.error('Error updating time entry:', error);
-              this.snackBar.open('Error updating time entry', 'Close', { duration: 3000 });
-            }
-          });
+          this.snackBar.open('Time entry updated successfully', 'Close', { duration: 3000 });
         }
       }
     });
@@ -155,19 +137,28 @@ export class TimesheetPageComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.timeEntryService.createTimeEntry(result).subscribe({
-          next: () => {
-            this.snackBar.open('Time entry created successfully', 'Close', { duration: 3000 });
-          },
-          error: (error) => {
-            console.error('Error creating time entry:', error);
-            this.snackBar.open('Error creating time entry', 'Close', { duration: 3000 });
-          }
-        });
+        this.snackBar.open('Time entry created successfully', 'Close', { duration: 3000 });
       }
     });
   }
 
+  onAddEntryForDate(date: Date): void {
+    const dialogRef = this.dialog.open(AddModal, {
+      width: '500px',
+      maxWidth: '90vw',
+      data: { 
+        prefilledDate: date,
+        userId: 'current-user' // This should come from auth service
+      },
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.snackBar.open('Time entry created successfully', 'Close', { duration: 3000 });
+      }
+    });
+  }
 
   // Methods to handle summary data from table
   onSummaryDataReceived(summary: { totalEntries: number; totalHours: string }): void {
