@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -43,6 +43,8 @@ export class TimesheetPageComponent implements OnInit {
   private timeEntryService = inject(TimeEntryService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
+
+  @ViewChild(TimesheetTableComponent) timesheetTable!: TimesheetTableComponent;
 
   // Signals for reactive state management
   private startDateSignal = signal<Date | null>(null);
@@ -106,6 +108,8 @@ export class TimesheetPageComponent implements OnInit {
         } else {
           this.snackBar.open('Time entry updated successfully', 'Close', { duration: 3000 });
         }
+
+        this.timesheetTable.refreshData();
       }
     });
   }
@@ -115,6 +119,8 @@ export class TimesheetPageComponent implements OnInit {
       this.timeEntryService.deleteTimeEntry(entry.id).subscribe({
         next: () => {
           this.snackBar.open('Time entry deleted successfully', 'Close', { duration: 3000 });
+
+          this.timesheetTable.refreshData();
         },
         error: (error) => {
           console.error('Error deleting time entry:', error);
@@ -138,6 +144,7 @@ export class TimesheetPageComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.snackBar.open('Time entry created successfully', 'Close', { duration: 3000 });
+        this.timesheetTable.refreshData();
       }
     });
   }
@@ -156,6 +163,8 @@ export class TimesheetPageComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.snackBar.open('Time entry created successfully', 'Close', { duration: 3000 });
+
+        this.timesheetTable.refreshData();
       }
     });
   }

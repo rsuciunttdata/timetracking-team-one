@@ -203,6 +203,10 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     });
   }
 
+  refreshData(): void {
+    this.loadTimeEntries();
+  }
+
   onPageChange(event: PageEvent): void {
     this.pageState.set(event);
   }
