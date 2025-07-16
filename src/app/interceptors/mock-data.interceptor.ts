@@ -18,12 +18,12 @@ export const mockDataInterceptorFn: HttpInterceptorFn = (req, next) => {
   console.log('🔍 Functional Interceptor called for:', req.method, req.url);
   console.log('🔍 API_CONFIG.ENABLE_MOCK_DATA:', API_CONFIG.ENABLE_MOCK_DATA);
   
-  const isApi = isApiCall(req.url);
-  console.log('🔍 Is API call:', isApi);
+  const isTimeEntriesCall = req.url.includes(API_CONFIG.ENDPOINTS.TIME_ENTRIES);
+  console.log('🔍 Is API call:', isTimeEntriesCall);
   
   // Only intercept if mock data is enabled and it's an API call
-  if (!API_CONFIG.ENABLE_MOCK_DATA || !isApi) {
-    console.log('⏭️ Passing through to real HTTP');
+  if (!API_CONFIG.ENABLE_MOCK_DATA || !isTimeEntriesCall) {
+    console.log('⏭️ Passing through to other intercptor or real HTTP');
     return next(req);
   }
 
@@ -31,32 +31,12 @@ export const mockDataInterceptorFn: HttpInterceptorFn = (req, next) => {
   return handleMockRequest(req);
 };
 
-function isApiCall(url: string): boolean {
-  console.log('🔍 Checking URL:', url);
-  
-  const patterns = [
-    '/api/',
-    '/api/time-entries',
-    'time-entries',
-    '/time-entries'
-  ];
-  
-  const matches = patterns.some(pattern => url.includes(pattern));
-  console.log('🔍 URL matches API patterns:', matches);
-  
-  return matches;
-}
-
 function handleMockRequest(req: any): Observable<any> {
   const { method, url } = req;
   let mockResponse: ApiResponse<any>;
 
   try {
-    if (url.includes('time-entries')) {
-      mockResponse = handleTimeEntriesRequest(method, req);
-    } else {
-      mockResponse = createErrorResponse('Endpoint not found', 404);
-    }
+      mockResponse = handleTimeEntriesRequest(method, req.params);
   } catch (error) {
     console.error('Mock request error:', error);
     mockResponse = createErrorResponse('Internal server error', 500);
