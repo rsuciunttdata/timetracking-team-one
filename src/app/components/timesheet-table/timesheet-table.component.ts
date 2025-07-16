@@ -255,17 +255,25 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   }
 
   getStatusText(entry: TimeEntry): string {
+    // Check if it's a placeholder entry
+    if (this.isPlaceholderEntry(entry)) {
+      return 'No Entry';
+    }
+    
+    // If any required field is missing, it's not a complete entry
+    if (!entry.startTime || !entry.endTime) {
+      return 'Pending';
+    }
+    
     const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
     const [hours] = workedTime.split(':').map(Number);
     
     if (hours >= 8) {
-      return 'Full Day';
-    } else if (hours >= 6) {
-      return 'Partial Day';
+      return 'Complete';
     } else if (hours > 0) {
-      return 'Under Time';
+      return 'In Progress';
     } else {
-      return 'No Entry';
+      return 'Pending';
     }
   }
 
@@ -287,7 +295,8 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   }
 
   isPlaceholderEntry(entry: TimeEntry | null): boolean {
-    return entry !== null && !entry.id;
+    if (!entry) return true;
+    return entry.id.startsWith('placeholder-') || !entry.startTime || !entry.endTime;
   }
 
   isWeekendDay(date: Date): boolean {
