@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -13,6 +13,8 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 
 import { TimesheetTableComponent } from '../components/timesheet-table/timesheet-table.component';
+import { AddModal } from '../components/modal/add-modal/add-modal';
+import { EditModal } from '../components/modal/edit-modal/edit-modal';
 import { TimeEntryService } from '../services/time-entry.service';
 import { TimeEntry } from '../interfaces/time-entry.interface';
 
@@ -41,6 +43,8 @@ export class TimesheetPageComponent implements OnInit {
   private timeEntryService = inject(TimeEntryService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
+
+  @ViewChild(TimesheetTableComponent) timesheetTable!: TimesheetTableComponent;
 
   // Signals for reactive state management
   private startDateSignal = signal<Date | null>(null);
@@ -81,7 +85,6 @@ export class TimesheetPageComponent implements OnInit {
   }
 
   onDateRangeChange(): void {
-    // The table will automatically react to the dateFilter computed signal
     console.log('Date range changed:', this.dateFilter());
   }
 
@@ -91,8 +94,24 @@ export class TimesheetPageComponent implements OnInit {
   }
 
   onEditEntry(entry: TimeEntry): void {
-    // TODO: Open edit dialog
-    this.snackBar.open(`Edit entry for ${entry.date}`, 'Close', { duration: 2000 });
+    const dialogRef = this.dialog.open(EditModal, {
+      width: '500px',
+      maxWidth: '90vw',
+      data: { timeEntry: entry },
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (result.delete) {
+          this.snackBar.open('Time entry deleted successfully', 'Close', { duration: 3000 });
+        } else {
+          this.snackBar.open('Time entry updated successfully', 'Close', { duration: 3000 });
+        }
+
+        this.timesheetTable.refreshData();
+      }
+    });
   }
 
   onDeleteEntry(entry: TimeEntry): void {
@@ -100,6 +119,8 @@ export class TimesheetPageComponent implements OnInit {
       this.timeEntryService.deleteTimeEntry(entry.id).subscribe({
         next: () => {
           this.snackBar.open('Time entry deleted successfully', 'Close', { duration: 3000 });
+
+          this.timesheetTable.refreshData();
         },
         error: (error) => {
           console.error('Error deleting time entry:', error);
@@ -110,8 +131,42 @@ export class TimesheetPageComponent implements OnInit {
   }
 
   onAddNewEntry(): void {
-    // TODO: Open add dialog
-    this.snackBar.open('Add new entry dialog will open here', 'Close', { duration: 2000 });
+    const dialogRef = this.dialog.open(AddModal, {
+      width: '500px',
+      maxWidth: '90vw',
+      data: { 
+        prefilledDate: new Date(),
+        userId: 'current-user' // This should come from auth service
+      },
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.snackBar.open('Time entry created successfully', 'Close', { duration: 3000 });
+        this.timesheetTable.refreshData();
+      }
+    });
+  }
+
+  onAddEntryForDate(date: Date): void {
+    const dialogRef = this.dialog.open(AddModal, {
+      width: '500px',
+      maxWidth: '90vw',
+      data: { 
+        prefilledDate: date,
+        userId: 'current-user' // This should come from auth service
+      },
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.snackBar.open('Time entry created successfully', 'Close', { duration: 3000 });
+
+        this.timesheetTable.refreshData();
+      }
+    });
   }
 
   // Methods to handle summary data from table
