@@ -1,24 +1,131 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()"
-  class="space-y-4 w-full max-w-sm bg-white p-6 rounded-2xl shadow mx-auto mt-10">
-  <mat-form-field appearance="fill" class="w-full">
-    <mat-label>Email</mat-label>
-    <input matInput placeholder="you@example.com" formControlName="email" required />
-    <mat-error *ngIf="form.get('email')?.hasError('required')">Email is required</mat-error>
-    <mat-error *ngIf="form.get('email')?.hasError('email')">Invalid email</mat-error>
-  </mat-form-field>
-
-  <mat-form-field appearance="fill" class="w-full">
-    <mat-label>Password</mat-label>
-    <input matInput [type]="hide() ? 'password' : 'text'" formControlName="password" required />
-    <button mat-icon-button matSuffix (click)="clickEvent($event)" [attr.aria-label]="'Hide password'"
-      [attr.aria-pressed]="hide()" type="button">
-      <mat-icon>{{ hide() ? 'visibility_off' : 'visibility' }}</mat-icon>
-    </button>
-    <mat-error *ngIf="form.get('password')?.hasError('required')">Password is required</mat-error>
-  </mat-form-field>
-
-  <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded w-full">Login</button>
-  <div *ngIf="errorMessage()" class="text-red-600 text-sm mt-2">
-    {{ errorMessage() }}
+<div class="min-h-screen bg-transparent relative overflow-hidden">
+  <!-- Animated Background Elements -->
+  <div class="absolute inset-0 opacity-10 pointer-events-none">
+    <div class="absolute top-20 left-20 w-32 h-32 bg-white rounded-full blur-xl animate-float"></div>
+    <div class="absolute top-60 right-40 w-24 h-24 bg-white rounded-full blur-lg animate-float" style="animation-delay: -2s;"></div>
+    <div class="absolute bottom-40 left-40 w-40 h-40 bg-white rounded-full blur-2xl animate-float" style="animation-delay: -4s;"></div>
+    <div class="absolute bottom-20 right-20 w-28 h-28 bg-white rounded-full blur-xl animate-float" style="animation-delay: -3s;"></div>
+    <div class="absolute top-1/2 left-1/4 w-16 h-16 bg-white rounded-full blur-lg animate-float" style="animation-delay: -1s;"></div>
+    <div class="absolute top-1/3 right-1/3 w-20 h-20 bg-white rounded-full blur-xl animate-float" style="animation-delay: -5s;"></div>
   </div>
-</form>
+
+  <div class="relative z-10 min-h-screen flex">
+    <!-- Left Side - Login Form -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 animate-slide-in-left">
+      <div class="w-full max-w-md">
+        <!-- Login Card -->
+        <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20">
+          <!-- Header -->
+          <div class="text-center mb-8">
+            <div class="flex items-center justify-center mb-4">
+              <div class="w-16 h-16 rounded-2xl flex items-center justify-center">
+                <mat-icon class="text-3xl text-white">schedule</mat-icon>
+              </div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome Back</h2>
+            <p class="text-gray-600">Sign in to your TimeTracker account</p>
+          </div>
+
+          <!-- Login Form -->
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+            <div>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Email Address</mat-label>
+                <input matInput placeholder="you@example.com" formControlName="email" required type="email" />
+                <mat-icon matPrefix class="text-gray-400 mr-2">email</mat-icon>
+                <mat-error *ngIf="form.get('email')?.hasError('required')">Email is required</mat-error>
+                <mat-error *ngIf="form.get('email')?.hasError('email')">Please enter a valid email</mat-error>
+              </mat-form-field>
+            </div>
+
+            <div>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Password</mat-label>
+                <input matInput [type]="hide() ? 'password' : 'text'" formControlName="password" required />
+                <mat-icon matPrefix class="text-gray-400 mr-2">lock</mat-icon>
+                <button mat-icon-button matSuffix (click)="clickEvent($event)" type="button" class="text-gray-400">
+                  <mat-icon>{{ hide() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+                <mat-error *ngIf="form.get('password')?.hasError('required')">Password is required</mat-error>
+              </mat-form-field>
+            </div>
+
+            <!-- Error Message -->
+            <div *ngIf="errorMessage()" class="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div class="flex items-center">
+                <mat-icon class="text-red-500 mr-2">error</mat-icon>
+                <span class="text-red-700 text-sm">{{ errorMessage() }}</span>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button 
+              type="submit" 
+              [disabled]="form.invalid"
+              class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+              Sign In
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side - Welcome Section -->
+    <div class="hidden lg:flex lg:w-1/2 items-center justify-center p-8 animate-slide-in-right">
+      <div class="text-center text-white max-w-lg">
+        <!-- Logo & Brand -->
+        <div class="flex items-center justify-center mb-8">
+          <div class="w-20 h-20 bg-white/20 rounded-2xl backdrop-blur-sm flex items-center justify-center border border-white/30">
+            <mat-icon class="text-5xl text-white drop-shadow-lg">schedule</mat-icon>
+          </div>
+        </div>
+
+        <!-- Main Title -->
+        <h1 class="text-5xl font-light tracking-tight mb-6 drop-shadow-lg">
+          TimeTracker
+          <span class="block text-3xl font-medium text-purple-200 mt-2">Professional</span>
+        </h1>
+
+        <!-- Subtitle -->
+        <h2 class="text-2xl font-light mb-6 text-white/90 drop-shadow">
+          Track Time. Boost Productivity. Achieve More.
+        </h2>
+
+        <!-- Welcome Message -->
+        <p class="text-lg text-white/80 leading-relaxed mb-8 drop-shadow-sm">
+          Welcome to the future of time management. Our platform helps teams and individuals 
+          track time efficiently, analyze productivity patterns, and achieve their goals with 
+          intelligent insights and seamless collaboration.
+        </p>
+
+        <!-- Features List -->
+        <div class="grid grid-cols-2 gap-4 text-left">
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+              <mat-icon class="text-white text-sm">check</mat-icon>
+            </div>
+            <span class="text-white/90">Real-time Tracking</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+              <mat-icon class="text-white text-sm">check</mat-icon>
+            </div>
+            <span class="text-white/90">Team Collaboration</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+              <mat-icon class="text-white text-sm">check</mat-icon>
+            </div>
+            <span class="text-white/90">Advanced Reports</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+              <mat-icon class="text-white text-sm">check</mat-icon>
+            </div>
+            <span class="text-white/90">Mobile Ready</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
