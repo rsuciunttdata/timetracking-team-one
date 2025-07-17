@@ -3,9 +3,14 @@
     <mat-icon>schedule</mat-icon>
     <span class="toolbar-title">Timesheet</span>
     <span class="toolbar-spacer"></span>
+    <span *ngIf="username" class="welcome-text">Hi, {{ username }}!</span>
+    <span class="toolbar-spacer"></span>
     <button mat-raised-button color="primary" (click)="onAddNewEntry()">
       <mat-icon>add</mat-icon>
       Add Entry
+    </button>
+    <button mat-icon-button (click)="onLogout()" aria-label="Logout">
+      <mat-icon>logout</mat-icon>
     </button>
   </mat-toolbar>
 
@@ -19,20 +24,14 @@
         <div class="date-range-controls">
           <mat-form-field appearance="outline" class="date-field">
             <mat-label>Start Date</mat-label>
-            <input matInput 
-                   [matDatepicker]="startPicker" 
-                   [(ngModel)]="startDate"
-                   (dateChange)="onDateRangeChange()">
+            <input matInput [matDatepicker]="startPicker" [(ngModel)]="startDate" (dateChange)="onDateRangeChange()">
             <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
             <mat-datepicker #startPicker></mat-datepicker>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="date-field">
             <mat-label>End Date</mat-label>
-            <input matInput 
-                   [matDatepicker]="endPicker" 
-                   [(ngModel)]="endDate"
-                   (dateChange)="onDateRangeChange()">
+            <input matInput [matDatepicker]="endPicker" [(ngModel)]="endDate" (dateChange)="onDateRangeChange()">
             <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
             <mat-datepicker #endPicker></mat-datepicker>
           </mat-form-field>
@@ -59,11 +58,8 @@
     <!-- Time Entries Table -->
     <mat-card class="table-card">
       <mat-card-content>
-        <app-timesheet-table
-          [dateFilter]="dateFilter()"
-          (summaryData)="onSummaryDataReceived($event)"
-          (editEntry)="onEditEntry($event)"
-          (deleteEntry)="onDeleteEntry($event)">
+        <app-timesheet-table [dateFilter]="dateFilter()" (summaryData)="onSummaryDataReceived($event)"
+          (editEntry)="onEditEntry($event)" (deleteEntry)="onDeleteEntry($event)">
         </app-timesheet-table>
       </mat-card-content>
     </mat-card>

@@ -39,3 +39,8 @@ export interface DateRange {
   startDate: Date;
   endDate: Date;
 }
+
+export interface LoginResponse {
+  success: boolean;
+  errorCode?: 'invalid_email' | 'invalid_password';
+}
