@@ -10,18 +10,40 @@
   }
 }
 
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
 .animate-fade-in-up {
   animation: fade-in-up 0.8s ease-out;
 }
 
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
 .text-shadow {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Enhanced content readability with backdrop */
+.content-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Custom Material overrides for better integration with Tailwind */
 .mat-mdc-card {
   border-radius: 1rem !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
 }
 
 .mat-mdc-progress-bar .mdc-linear-progress__bar-inner {

@@ -1,0 +1,112 @@
+<div class="modal-container">
+  <div class="modal-header">
+    <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+      <mat-icon class="text-blue-600">add_circle</mat-icon>
+      Add Time Entry
+    </h2>
+    <button mat-icon-button (click)="onCancel()" class="text-gray-400 hover:text-gray-600">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <form [formGroup]="timeEntryForm" class="modal-form">
+    <div class="form-grid">
+      <!-- Date Field -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Date</mat-label>
+        <input matInput 
+               [matDatepicker]="picker" 
+               formControlName="date"
+               readonly>
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        @if (timeEntryForm.get('date')?.hasError('required')) {
+          <mat-error>Date is required</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- Start Time Field -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Start Time</mat-label>
+        <input matInput 
+               type="time"
+               formControlName="startTime"
+               placeholder="09:00">
+        @if (timeEntryForm.get('startTime')?.hasError('required')) {
+          <mat-error>Start time is required</mat-error>
+        }
+        @if (timeEntryForm.get('startTime')?.hasError('pattern')) {
+          <mat-error>Please enter a valid time format (HH:MM)</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- End Time Field -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>End Time</mat-label>
+        <input matInput 
+               type="time"
+               formControlName="endTime"
+               placeholder="17:00">
+        @if (timeEntryForm.get('endTime')?.hasError('required')) {
+          <mat-error>End time is required</mat-error>
+        }
+        @if (timeEntryForm.get('endTime')?.hasError('pattern')) {
+          <mat-error>Please enter a valid time format (HH:MM)</mat-error>
+        }
+        @if (timeEntryForm.get('endTime')?.hasError('endTimeBeforeStart')) {
+          <mat-error>End time must be after start time</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- Break Duration Field -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Break Duration</mat-label>
+        <input matInput 
+               type="time"
+               formControlName="breakDuration"
+               placeholder="01:00">
+        @if (timeEntryForm.get('breakDuration')?.hasError('required')) {
+          <mat-error>Break duration is required</mat-error>
+        }
+        @if (timeEntryForm.get('breakDuration')?.hasError('pattern')) {
+          <mat-error>Please enter a valid time format (HH:MM)</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="preview-section">
+      <div class="preview-card">
+        <div class="preview-header">
+          <mat-icon class="text-green-600">schedule</mat-icon>
+          <span class="font-medium text-gray-800">Total Worked Time</span>
+        </div>
+        <div class="preview-time">
+          {{ previewWorkedTime() }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="modal-actions">
+      <button mat-button 
+              type="button" 
+              (click)="onCancel()"
+              class="cancel-button">
+        Cancel
+      </button>
+      <button mat-raised-button 
+              color="primary"
+              type="button"
+              (click)="onSave()"
+              class="save-button">
+        @if (isSubmitting()) {
+          <mat-spinner diameter="16" style="color: white;"></mat-spinner>
+        } @else {
+          <mat-icon>save</mat-icon>
+        }
+        {{ isSubmitting() ? 'Saving...' : 'Save Entry' }}
+      </button>
+    </div>
+  </form>
+</div>

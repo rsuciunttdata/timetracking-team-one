@@ -40,6 +40,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   // Outputs for parent communication
   @Output() editEntry = new EventEmitter<TimeEntry>();
   @Output() deleteEntry = new EventEmitter<TimeEntry>();
+  @Output() addEntry = new EventEmitter<void>();
   @Output() summaryData = new EventEmitter<{ totalEntries: number; totalHours: string }>();
   
   private timeEntryService = inject(TimeEntryService);
@@ -202,6 +203,10 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     });
   }
 
+  refreshData(): void {
+    this.loadTimeEntries();
+  }
+
   onPageChange(event: PageEvent): void {
     this.pageState.set(event);
   }
@@ -219,14 +224,9 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   }
 
   onAddEntry(): void {
-    console.log('Add entry clicked');
+    this.addEntry.emit();
   }
 
-  onAddEntryForDate(date: Date): void {
-    // Emit an event to the parent to open add modal with pre-filled date
-    console.log('Add entry for date:', date);
-    // TODO: Emit event to parent component to open add modal with the specific date
-  }
 
   formatDate(date: Date): string {
     return new Intl.DateTimeFormat('en-US', {
@@ -255,17 +255,25 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   }
 
   getStatusText(entry: TimeEntry): string {
+    // Check if it's a placeholder entry
+    if (this.isPlaceholderEntry(entry)) {
+      return 'No Entry';
+    }
+    
+    // If any required field is missing, it's not a complete entry
+    if (!entry.startTime || !entry.endTime) {
+      return 'Pending';
+    }
+    
     const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
     const [hours] = workedTime.split(':').map(Number);
     
     if (hours >= 8) {
-      return 'Full Day';
-    } else if (hours >= 6) {
-      return 'Partial Day';
+      return 'Complete';
     } else if (hours > 0) {
-      return 'Under Time';
+      return 'In Progress';
     } else {
-      return 'No Entry';
+      return 'Pending';
     }
   }
 
@@ -287,7 +295,8 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   }
 
   isPlaceholderEntry(entry: TimeEntry | null): boolean {
-    return entry !== null && !entry.id;
+    if (!entry) return true;
+    return entry.id.startsWith('placeholder-') || !entry.startTime || !entry.endTime;
   }
 
   isWeekendDay(date: Date): boolean {
