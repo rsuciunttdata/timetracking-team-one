@@ -1,3 +1,163 @@
+/* Professional Table Styles - TimeTracker Identity */
+
+/* Table container with fixed height for 5 entries */
+.table-container {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.table-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Custom scrollbar styling */
+.table-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-scroll-area::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.table-scroll-area::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+  border-radius: 4px;
+}
+
+.table-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #2563eb, #7c3aed);
+}
+
+/* Professional table styling */
+.professional-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.professional-table .mat-mdc-header-cell {
+  background: #f9fafb !important;
+  color: #374151 !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  padding: 12px 16px !important;
+  border-bottom: 2px solid #e5e7eb !important;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.professional-table .mat-mdc-cell {
+  padding: 12px 16px !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+  background: white;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+/* Header row styling */
+.header-row {
+  background: #f9fafb;
+}
+
+/* Data row styling */
+.data-row:hover {
+  background: #f8fafc !important;
+  transform: none;
+  box-shadow: none;
+}
+
+.data-row {
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+/* Weekend row styling */
+.weekend-row {
+  background: #fefce8 !important;
+}
+
+.weekend-row:hover {
+  background: #fef3c7 !important;
+}
+
+/* Status chip styling */
+.status-chip {
+  border-radius: 9999px;
+  font-weight: 500;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  border: none;
+}
+
+.mat-mdc-chip.status-no-entry {
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
+}
+
+/* Action buttons - simplified styling */
+.action-button {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+  margin: 0 2px !important;
+}
+
+/* Remove the elaborate edit and delete button styling */
+
+/* Paginator styling */
+.paginator-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+}
+
+.professional-paginator {
+  background: transparent !important;
+  border: none !important;
+}
+
+.professional-paginator .mat-mdc-paginator-container {
+  padding: 0 !important;
+}
+
+.professional-paginator .mat-mdc-icon-button {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
+  color: white !important;
+  margin: 0 4px !important;
+  transition: all 0.3s ease !important;
+}
+
+.professional-paginator .mat-mdc-icon-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+}
+
+.professional-paginator .mat-mdc-icon-button:disabled {
+  background: #e5e7eb !important;
+  color: #9ca3af !important;
+}
+
+/* Time badges */
+.font-mono {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
 /* Loading State */
 .loading-container {
   display: flex;
@@ -9,12 +169,11 @@
 }
 
 /* Empty State */
-.empty-state-card {
-  margin: 2rem 0;
-  border-radius: 8px;
-}
-
 .empty-state {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border: 2px dashed #cbd5e1;
+  border-radius: 1rem;
+  margin: 1rem;
   text-align: center;
   padding: 3rem 2rem;
 }
@@ -28,6 +187,92 @@
 .empty-state h3 {
   font-size: 1.25rem;
   font-weight: 600;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .table-container {
+    height: 350px !important;
+    min-height: 350px !important;
+    max-height: 350px !important;
+  }
+  
+  .professional-table .mat-mdc-header-cell,
+  .professional-table .mat-mdc-cell {
+    padding: 12px 8px !important;
+    font-size: 0.8rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-container {
+    height: 300px !important;
+    min-height: 300px !important;
+    max-height: 300px !important;
+  }
+  
+  .professional-table .mat-mdc-header-cell,
+  .professional-table .mat-mdc-cell {
+    padding: 8px 6px !important;
+    font-size: 0.75rem !important;
+  }
+  
+  .action-button {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  .professional-paginator .mat-mdc-icon-button {
+    width: 32px !important;
+    height: 32px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .table-container {
+    height: 280px !important;
+    min-height: 280px !important;
+    max-height: 280px !important;
+  }
+  
+  /* Hide less important columns on mobile */
+  .professional-table .mat-column-breakDuration {
+    display: none;
+  }
+  
+  .professional-table .mat-column-status {
+    display: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .table-container {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+  }
+  
+  .table-scroll-area {
+    overflow: visible !important;
+    height: auto !important;
+  }
+  
+  .action-button,
+  .paginator-container {
+    display: none !important;
+  }
+  
+  .professional-table .mat-mdc-header-cell {
+    background: #f3f4f6 !important;
+    color: black !important;
+  }
+  
+  .data-row:hover {
+    background: white !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
 }
 
 /* Compact Table Styles */
