@@ -18,6 +18,9 @@ import { EditModal } from '../components/modal/edit-modal/edit-modal';
 import { TimeEntryService } from '../services/time-entry.service';
 import { TimeEntry } from '../interfaces/time-entry.interface';
 
+import { AuthService } from '../services/auth.service';
+import { Router } from '@angular/router';
+
 @Component({
   selector: 'app-timesheet-page',
   standalone: true,
@@ -34,7 +37,7 @@ import { TimeEntry } from '../interfaces/time-entry.interface';
     MatNativeDateModule,
     MatSnackBarModule,
     MatDialogModule,
-    TimesheetTableComponent
+    TimesheetTableComponent,
   ],
   templateUrl: './timesheet-page.component.html',
   styleUrls: ['./timesheet-page.component.css']
@@ -43,6 +46,8 @@ export class TimesheetPageComponent implements OnInit {
   private timeEntryService = inject(TimeEntryService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   @ViewChild(TimesheetTableComponent) timesheetTable!: TimesheetTableComponent;
 
@@ -95,6 +100,10 @@ export class TimesheetPageComponent implements OnInit {
 
   set endDate(value: Date | null) {
     this.endDateSignal.set(value);
+  }
+
+  get username(): string | null {
+    return this.authService.getUsername();
   }
 
   ngOnInit(): void {
@@ -397,5 +406,10 @@ export class TimesheetPageComponent implements OnInit {
 
   getTotalWorkedHours(): string {
     return this.summaryDataSignal().totalHours;
+  }
+
+  onLogout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }
