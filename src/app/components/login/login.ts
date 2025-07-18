@@ -47,7 +47,7 @@ export class Login {
         console.log('Rezultat login:', result);
         switch (result) {
           case 'success':
-            this.router.navigate(['/timesheet']);
+            this.router.navigate(['/employer-dashboard']);
             break;
 
           case 'invalid_email':
