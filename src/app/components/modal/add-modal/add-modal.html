@@ -4,7 +4,7 @@
       <mat-icon class="text-blue-600">add_circle</mat-icon>
       Add Time Entry
     </h2>
-    <button mat-icon-button (click)="onCancel()" class="text-gray-400 hover:text-gray-600">
+    <button mat-icon-button (click)="onCancel()" class="text-gray-400 hover:text-gray-600 close-button">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -12,7 +12,7 @@
   <form [formGroup]="timeEntryForm" class="modal-form">
     <div class="form-grid">
       <!-- Date Field -->
-      <mat-form-field appearance="outline" class="form-field">
+      <mat-form-field appearance="outline" class="form-field full-width">
         <mat-label>Date</mat-label>
         <input matInput 
                [matDatepicker]="picker" 
@@ -59,7 +59,7 @@
       </mat-form-field>
 
       <!-- Break Duration Field -->
-      <mat-form-field appearance="outline" class="form-field">
+      <mat-form-field appearance="outline" class="form-field full-width">
         <mat-label>Break Duration</mat-label>
         <input matInput 
                type="time"
@@ -99,9 +99,10 @@
               color="primary"
               type="button"
               (click)="onSave()"
+              [disabled]="isSubmitting()"
               class="save-button">
         @if (isSubmitting()) {
-          <mat-spinner diameter="16" style="color: white;"></mat-spinner>
+          <mat-spinner diameter="16"></mat-spinner>
         } @else {
           <mat-icon>save</mat-icon>
         }
