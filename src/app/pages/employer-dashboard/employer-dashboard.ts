@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { UserService, AppUser } from '../../services/user.service';
 
 @Component({
   selector: 'app-employer-dashboard',
@@ -20,18 +21,16 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 export class EmployerDashboard {
   username: string | null;
 
-  users = signal<{ id: string; name: string }[]>([
-    { id: 'u1', name: 'User 1' },
-    { id: 'u2', name: 'User 2' },
-    { id: 'u3', name: 'User 3' }
-  ]);
-
-
+  users = signal<AppUser[]>([]);
 
   selectedUserId = signal<string | null>(null);
   entries = signal<TimeEntry[]>([]);
 
-  constructor(private timeEntryService: TimeEntryService, private router: Router, private authService: AuthService) {
+  constructor(private timeEntryService: TimeEntryService, private router: Router, private authService: AuthService, private userService: UserService) {
+    this.userService.getUsers().subscribe(users => {
+      this.users.set(users);
+    })
+
     effect(() => {
       const userId = this.selectedUserId();
       if (userId) {
