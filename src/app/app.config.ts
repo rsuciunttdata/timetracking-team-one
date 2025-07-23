@@ -13,7 +13,7 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(
-      withInterceptors([mockDataInterceptorFn, authMockInterceptor])
+      withInterceptors([authMockInterceptor, mockDataInterceptorFn])
     ),
     provideAnimations()
   ]

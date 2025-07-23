@@ -1,4 +1,4 @@
-import { HttpInterceptorFn, HttpRequest, HttpResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { API_CONFIG } from '../config/api.config';
@@ -10,17 +10,19 @@ export const authMockInterceptor: HttpInterceptorFn = (req, next) => {
         return next(req);
     }
 
-    const { email, password } = req.body as { email: string; password: string };
+    const body = req.body as { email: string; password: string };
+    const email = body?.email?.trim().toLowerCase();
+    const password = body?.password;
 
-    let body: any;
+    let responseBody: any;
 
     if (email !== 'admin@test.com') {
-        body = { success: false, errorCode: 'invalid_email' };
+        responseBody = { success: false, errorCode: 'invalid_email' };
     } else if (password !== '123456') {
-        body = { success: false, errorCode: 'invalid_password' };
+        responseBody = { success: false, errorCode: 'invalid_password' };
     } else {
-        body = { success: true };
+        responseBody = { success: true };
     }
 
-    return of(new HttpResponse({ status: 200, body })).pipe(delay(500));
+    return of(new HttpResponse({ status: 200, body: responseBody })).pipe(delay(500));
 };

@@ -1,3 +1,18 @@
+<div class="timesheet-page">
+  <mat-toolbar class="page-toolbar">
+    <mat-icon>schedule</mat-icon>
+    <span class="toolbar-title">Timesheet</span>
+    <span class="toolbar-spacer"></span>
+    <span *ngIf="username" class="welcome-text">Hi, {{ username }}!</span>
+    <span class="toolbar-spacer"></span>
+    <button mat-raised-button color="primary" (click)="onAddNewEntry()">
+      <mat-icon>add</mat-icon>
+      Add Entry
+    </button>
+    <button mat-icon-button (click)="onLogout()" aria-label="Logout">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </mat-toolbar>
 <div class="min-h-screen bg-transparent p-6">
   <!-- Header Section -->
   <div class="mb-8">
@@ -44,7 +59,7 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-600 text-sm font-medium">This Week</p>
-            <p class="text-2xl font-bold text-gray-800">40h</p>
+            <p class="text-2xl font-bold text-gray-800">{{ thisWeekSummary().hours }}</p>
           </div>
           <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
             <mat-icon class="text-purple-600">date_range</mat-icon>
@@ -56,7 +71,7 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-gray-600 text-sm font-medium">Today</p>
-            <p class="text-2xl font-bold text-gray-800">8h</p>
+            <p class="text-2xl font-bold text-gray-800">{{ todaySummary().hours }}</p>
           </div>
           <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
             <mat-icon class="text-orange-600">today</mat-icon>
@@ -79,40 +94,55 @@
         <div class="space-y-4">
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>Start Date</mat-label>
-            <input matInput 
-                   [matDatepicker]="startPicker" 
-                   [(ngModel)]="startDate"
-                   (dateChange)="onDateRangeChange()">
+            <input matInput [matDatepicker]="startPicker" [(ngModel)]="startDate" (dateChange)="onDateRangeChange()">
             <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
             <mat-datepicker #startPicker></mat-datepicker>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
             <mat-label>End Date</mat-label>
-            <input matInput 
-                   [matDatepicker]="endPicker" 
-                   [(ngModel)]="endDate"
-                   (dateChange)="onDateRangeChange()">
+            <input matInput [matDatepicker]="endPicker" [(ngModel)]="endDate" (dateChange)="onDateRangeChange()">
             <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
             <mat-datepicker #endPicker></mat-datepicker>
           </mat-form-field>
           
           <!-- Quick Filter Buttons -->
-          <div class="space-y-2">
-            <p class="text-sm font-medium text-gray-700 mb-3">Quick Filters</p>
-            <button class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors">
-              Today
-            </button>
-            <button class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors">
-              This Week
-            </button>
-            <button class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors">
-              This Month
-            </button>
-            <button class="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors">
-              Last 30 Days
-            </button>
-          </div>
+          <details class="space-y-2">
+            <summary class="text-sm font-medium text-gray-700 mb-3 cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-2">
+              <mat-icon class="text-lg">expand_more</mat-icon>
+              Quick Filters
+            </summary>
+            <div class="space-y-2 mt-3">
+              <button 
+                (click)="setTodayFilter()"
+                [class]="isQuickFilterActive('today') ? 'w-full text-left px-3 py-2 rounded-lg text-sm bg-blue-100 text-blue-700 border border-blue-200 transition-colors' : 'w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors'">
+                Today
+              </button>
+              <button 
+                (click)="setThisWeekFilter()"
+                [class]="isQuickFilterActive('thisWeek') ? 'w-full text-left px-3 py-2 rounded-lg text-sm bg-blue-100 text-blue-700 border border-blue-200 transition-colors' : 'w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors'">
+                This Week
+              </button>
+              <button 
+                (click)="setThisMonthFilter()"
+                [class]="isQuickFilterActive('thisMonth') ? 'w-full text-left px-3 py-2 rounded-lg text-sm bg-blue-100 text-blue-700 border border-blue-200 transition-colors' : 'w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors'">
+                This Month
+              </button>
+              <button 
+                (click)="setLast30DaysFilter()"
+                [class]="isQuickFilterActive('last30Days') ? 'w-full text-left px-3 py-2 rounded-lg text-sm bg-blue-100 text-blue-700 border border-blue-200 transition-colors' : 'w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors'">
+                Last 30 Days
+              </button>
+              
+              <!-- Clear Filters Button -->
+              <button 
+                (click)="clearDateFilters()"
+                class="w-full text-left px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors border border-red-200 mt-4">
+                <mat-icon class="text-sm mr-2">clear</mat-icon>
+                Clear Filters
+              </button>
+            </div>
+          </details>
         </div>
       </div>
     </div>
@@ -120,12 +150,6 @@
     <!-- Time Entries Table -->
     <div class="lg:col-span-3">
       <div class="bg-white/95 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl overflow-hidden">
-        <div class="p-6 border-b border-gray-200">
-          <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <mat-icon class="text-blue-600">table_view</mat-icon>
-            Time Entries
-          </h3>
-        </div>
         <div class="p-6">
           <app-timesheet-table
             [dateFilter]="dateFilter()"

@@ -1,175 +1,36 @@
-.modal-container {
-  padding: 1.5rem;
-  max-width: 28rem;
-  width: 100%;
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
+/*shared modal styles */
+@import url('../shared-modal.css');
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-}
+/* Edit Modal Specific Styles - Orange Theme */
 
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-.form-field {
-  width: 100%;
-}
-
-.preview-section {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #f3f4f6;
-}
-
-.preview-card {
-  background: linear-gradient(to right, #f0fdf4, #eff6ff);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  border: 1px solid #bbf7d0;
-}
-
-.preview-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.preview-time {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #15803d;
-  text-align: center;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.action-buttons-right {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.delete-button {
-  color: #dc2626;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.delete-button:hover {
-  background-color: #fef2f2;
-  color: #991b1b;
-}
-
-.cancel-button {
-  color: #6b7280;
-}
-
-.cancel-button:hover {
-  color: #111827;
+.modal-header h2 mat-icon {
+  color: #ea580c !important;
 }
 
 .save-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 120px;
-  justify-content: center;
+  background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3) !important;
 }
 
-/* Spinner styling */
-::ng-deep .save-button mat-spinner {
-  margin-right: 0.5rem;
+.save-button:hover:not(:disabled) {
+  box-shadow: 0 8px 20px rgba(234, 88, 12, 0.4) !important;
 }
 
-::ng-deep .save-button mat-spinner circle {
-  stroke: white !important;
+.save-button:disabled {
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2) !important;
 }
 
-/* Form field customizations */
-::ng-deep .form-field .mat-mdc-form-field-wrapper {
-  margin-bottom: 0;
+/* Preview card with orange accent */
+.preview-card {
+  border-color: rgba(234, 88, 12, 0.2) !important;
 }
 
-::ng-deep .form-field .mat-mdc-form-field-subscript-wrapper {
-  margin-top: 0.25rem;
+/* Delete button specific styling */
+.delete-button {
+  transition: all 0.3s ease;
 }
 
-/* Time input styling */
-::ng-deep input[type="time"] {
-  font-family: 'Courier New', monospace;
-  font-size: 1rem;
-}
-
-/* Error styling */
-::ng-deep .mat-mdc-form-field-error {
-  color: #dc2626;
-  font-size: 0.875rem;
-}
-
-/* Disabled button styling */
-::ng-deep .save-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Tailwind CSS reset overrides for Angular Material */
-::ng-deep .modal-container .mat-mdc-form-field {
-  border: none !important;
-}
-
-::ng-deep .modal-container .mat-mdc-form-field .mat-mdc-text-field-wrapper {
-  border: none !important;
-}
-
-::ng-deep .modal-container .mat-mdc-form-field .mat-mdc-form-field-outline-start,
-::ng-deep .modal-container .mat-mdc-form-field .mat-mdc-form-field-outline-notch,
-::ng-deep .modal-container .mat-mdc-form-field .mat-mdc-form-field-outline-end {
-  border: 1px solid rgba(0, 0, 0, 0.12) !important;
-}
-
-::ng-deep .modal-container .mat-mdc-form-field.mat-focused .mat-mdc-form-field-outline-start,
-::ng-deep .modal-container .mat-mdc-form-field.mat-focused .mat-mdc-form-field-outline-notch,
-::ng-deep .modal-container .mat-mdc-form-field.mat-focused .mat-mdc-form-field-outline-end {
-  border-color: #3b82f6 !important;
-  border-width: 2px !important;
-}
-
-::ng-deep .modal-container input[type="time"],
-::ng-deep .modal-container input[type="date"] {
-  border: none !important;
-  outline: none !important;
-}
-
-::ng-deep .modal-container .mat-datepicker-toggle {
-  border: none !important;
-}
-
-::ng-deep .modal-container .mat-mdc-input-element {
-  border: none !important;
-  outline: none !important;
+.delete-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
