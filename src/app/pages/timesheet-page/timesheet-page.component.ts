@@ -12,13 +12,13 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 
-import { TimesheetTableComponent } from '../components/timesheet-table/timesheet-table.component';
-import { AddModal } from '../components/modal/add-modal/add-modal';
-import { EditModal } from '../components/modal/edit-modal/edit-modal';
-import { TimeEntryService } from '../services/time-entry.service';
-import { TimeEntry } from '../interfaces/time-entry.interface';
+import { TimesheetTableComponent } from '../../components/timesheet-table/timesheet-table.component';
+import { AddModal } from '../../components/modal/add-modal/add-modal';
+import { EditModal } from '../../components/modal/edit-modal/edit-modal';
+import { TimeEntryService } from '../../services/time-entry.service';
+import { TimeEntry } from '../../interfaces/time-entry.interface';
 
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 
 @Component({
