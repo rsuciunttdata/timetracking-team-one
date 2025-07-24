@@ -37,7 +37,7 @@ export class EmployerDashboard {
         this.loadEntries(userId);
       }
     });
-    this.username = this.authService.getUsername();
+    this.username = this.authService.username();
 
   }
 
