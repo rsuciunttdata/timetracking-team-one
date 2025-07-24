@@ -1,14 +1,58 @@
 [
     {
         "id": "user1",
-        "name": "Ana Popescu"
+        "name": "Tudor Atodiresei",
+        "email": "tudor.atodiresei@emeal.nttdata.com",
+        "password": "123456",
+        "role": "user"
     },
     {
         "id": "user2",
-        "name": "George Ionescu"
+        "name": "Calin Pavel",
+        "email": "calin.pavel@emeal.nttdata.com",
+        "password": "123456",
+        "role": "user"
     },
     {
         "id": "user3",
-        "name": "Maria Radu"
+        "name": "Andrei Calutiu",
+        "email": "andrei.calutiu@emeal.nttdata.com",
+        "password": "123456",
+        "role": "user"
+    },
+    {
+        "id": "user4",
+        "name": "Anna Marita-Thuri",
+        "email": "anna.marita@emeal.nttdata.com",
+        "password": "123456",
+        "role": "user"
+    },
+    {
+        "id": "user5",
+        "name": "Adrian Schiop",
+        "email": "adrian.schiop@emeal.nttdata.com",
+        "password": "123456",
+        "role": "user"
+    },
+    {
+        "id": "user6",
+        "name": "Antonia Albu",
+        "email": "antonia.albu@emeal.nttdata.com",
+        "password": "123456",
+        "role": "user"
+    },
+    {
+        "id": "user7",
+        "name": "Rares Suciu",
+        "email": "rares.suciu@emeal.nttdata.com",
+        "password": "123456",
+        "role": "admin"
+    },
+    {
+        "id": "user8",
+        "name": "Admin",
+        "email": "admin@test.com",
+        "password": "123456",
+        "role": "admin"
     }
 ]
