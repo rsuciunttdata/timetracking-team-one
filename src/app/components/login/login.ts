@@ -43,8 +43,8 @@ export class Login {
   onSubmit() {
     if (this.form.valid) {
       const { email, password } = this.form.value;
-
       this.auth.login(email, password).subscribe(result => {
+        console.log('Rezultat login:', result);
         switch (result) {
           case 'success':
             this.router.navigate(['/timesheet']);

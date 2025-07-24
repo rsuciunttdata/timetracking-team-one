@@ -18,12 +18,12 @@ export const mockDataInterceptorFn: HttpInterceptorFn = (req, next) => {
   console.log('🔍 Functional Interceptor called for:', req.method, req.url);
   console.log('🔍 API_CONFIG.ENABLE_MOCK_DATA:', API_CONFIG.ENABLE_MOCK_DATA);
   
-  const isApi = isApiCall(req.url);
-  console.log('🔍 Is API call:', isApi);
+  const isTimeEntriesCall = req.url.includes(API_CONFIG.ENDPOINTS.TIME_ENTRIES);
+  console.log('🔍 Is API call:', isTimeEntriesCall);
   
   // Only intercept if mock data is enabled and it's an API call
-  if (!API_CONFIG.ENABLE_MOCK_DATA || !isApi) {
-    console.log('⏭️ Passing through to real HTTP');
+  if (!API_CONFIG.ENABLE_MOCK_DATA || !isTimeEntriesCall) {
+    console.log('⏭️ Passing through to other intercptor or real HTTP');
     return next(req);
   }
 
@@ -31,32 +31,12 @@ export const mockDataInterceptorFn: HttpInterceptorFn = (req, next) => {
   return handleMockRequest(req);
 };
 
-function isApiCall(url: string): boolean {
-  console.log('🔍 Checking URL:', url);
-  
-  const patterns = [
-    '/api/',
-    '/api/time-entries',
-    'time-entries',
-    '/time-entries'
-  ];
-  
-  const matches = patterns.some(pattern => url.includes(pattern));
-  console.log('🔍 URL matches API patterns:', matches);
-  
-  return matches;
-}
-
 function handleMockRequest(req: any): Observable<any> {
   const { method, url } = req;
   let mockResponse: ApiResponse<any>;
 
   try {
-    if (url.includes('time-entries')) {
       mockResponse = handleTimeEntriesRequest(method, req);
-    } else {
-      mockResponse = createErrorResponse('Endpoint not found', 404);
-    }
   } catch (error) {
     console.error('Mock request error:', error);
     mockResponse = createErrorResponse('Internal server error', 500);
@@ -92,11 +72,12 @@ function handleTimeEntriesRequest(method: string, req: any): ApiResponse<any> {
 function handleGetTimeEntries(req: any): ApiResponse<any> {
   console.log('📄 GET time entries');
   
-  // Check if ia has ID in URL
-  const urlParts = req.url.split('/');
+  // Check if URL has ID in path
+  const url = req.url || '';
+  const urlParts = url.split('/');
   const lastPart = urlParts[urlParts.length - 1];
   
-  //looks like an ID (not a query param), it's a single entry request
+  // If looks like an ID (not a query param), it's a single entry request
   if (lastPart && !lastPart.includes('?') && lastPart !== 'time-entries') {
     const entryId = lastPart;
     const entry = mockTimeEntries.find(e => e.id === entryId);
@@ -109,8 +90,8 @@ function handleGetTimeEntries(req: any): ApiResponse<any> {
     return createSuccessResponse(entry);
   }
   
-  // Otherwise
-  const params = req.params || new URLSearchParams(req.url.split('?')[1] || '');
+  // Otherwise handle paginated list
+  const params = req.params || new URLSearchParams(url.split('?')[1] || '');
   const page = parseInt(params.get('page') || '1', 10);
   const pageSize = parseInt(params.get('pageSize') || '10', 10);
   
@@ -122,12 +103,15 @@ function handleGetTimeEntries(req: any): ApiResponse<any> {
 
   console.log('📄 Returning entries:', paginatedEntries.length);
 
-  return createSuccessResponse({
+  // Return the correct TimeEntryResponse structure
+  const timeEntryResponse = {
     data: paginatedEntries,
     total: mockTimeEntries.length,
     page,
     pageSize
-  });
+  };
+
+  return createSuccessResponse(timeEntryResponse);
 }
 
 function handleCreateTimeEntry(req: any): ApiResponse<TimeEntry> {
@@ -197,7 +181,8 @@ function handleDeleteTimeEntry(req: any): ApiResponse<void> {
   console.log('🗑️ DELETE time entry');
   
   // Extract ID from URL
-  const urlParts = req.url.split('/');
+  const url = req.url || '';
+  const urlParts = url.split('/');
   const entryId = urlParts[urlParts.length - 1];
   
   if (!entryId || entryId === 'time-entries') {
