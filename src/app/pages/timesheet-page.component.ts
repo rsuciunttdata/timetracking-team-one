@@ -314,8 +314,9 @@ export class TimesheetPageComponent implements OnInit {
 
   onEditEntry(entry: TimeEntry): void {
     const dialogRef = this.dialog.open(EditModal, {
-      width: '500px',
-      maxWidth: '90vw',
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      panelClass: 'responsive-dialog',
       data: { timeEntry: entry },
       disableClose: true
     });
@@ -350,8 +351,9 @@ export class TimesheetPageComponent implements OnInit {
 
   onAddNewEntry(): void {
     const dialogRef = this.dialog.open(AddModal, {
-      width: '500px',
-      maxWidth: '90vw',
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      panelClass: 'responsive-dialog',
       data: { 
         prefilledDate: new Date(),
         userId: 'current-user' // This should come from auth service
@@ -369,8 +371,9 @@ export class TimesheetPageComponent implements OnInit {
 
   onAddEntryForDate(date: Date): void {
     const dialogRef = this.dialog.open(AddModal, {
-      width: '500px',
-      maxWidth: '90vw',
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      panelClass: 'responsive-dialog',
       data: { 
         prefilledDate: date,
         userId: 'current-user' // This should come from auth service
