@@ -4,7 +4,7 @@
       <mat-icon class="text-orange-600">edit</mat-icon>
       Edit Time Entry
     </h2>
-    <button mat-icon-button (click)="onCancel()" class="text-gray-400 hover:text-gray-600">
+    <button mat-icon-button (click)="onCancel()" class="text-gray-400 hover:text-gray-600 close-button">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -12,7 +12,7 @@
   <form [formGroup]="timeEntryForm" class="modal-form">
     <div class="form-grid">
       <!-- Date Field -->
-      <mat-form-field appearance="outline" class="form-field">
+      <mat-form-field appearance="outline" class="form-field full-width">
         <mat-label>Date</mat-label>
         <input matInput 
                [matDatepicker]="picker" 
@@ -59,7 +59,7 @@
       </mat-form-field>
 
       <!-- Break Duration Field -->
-      <mat-form-field appearance="outline" class="form-field">
+      <mat-form-field appearance="outline" class="form-field full-width">
         <mat-label>Break Duration</mat-label>
         <input matInput 
                type="time"
@@ -88,7 +88,7 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="modal-actions">
+    <div class="modal-actions with-delete">
       <button mat-button 
               type="button" 
               (click)="onDelete()"
@@ -108,13 +108,14 @@
                 color="primary"
                 type="button"
                 (click)="onSave()"
+                [disabled]="!isFormValid() || isSubmitting()"
                 class="save-button">
           @if (isSubmitting()) {
-            <mat-spinner diameter="16" style="color: white;"></mat-spinner>
+            <mat-spinner diameter="16"></mat-spinner>
           } @else {
             <mat-icon>save</mat-icon>
           }
-          {{ isSubmitting() ? 'Updating...' : 'Update Entry' }}
+          {{ isSubmitting() ? 'Updating...' : 'Update' }}
         </button>
       </div>
     </div>
