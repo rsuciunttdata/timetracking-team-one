@@ -36,6 +36,7 @@ export class AuthService {
 
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('username', user.name);
+        localStorage.setItem('userId', user.id);
         localStorage.setItem('role', user.role);
 
         return of(user.role as 'admin' | 'user');
@@ -51,10 +52,15 @@ export class AuthService {
 
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('username');
+    localStorage.removeItem('userId');
     localStorage.removeItem('role');
   }
 
   isAuthenticated(): boolean {
     return this.isLoggedIn();
+  }
+
+  getUsername(): string | null {
+    return this.username();
   }
 }
