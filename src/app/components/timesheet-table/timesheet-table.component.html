@@ -1,0 +1,260 @@
+<!-- Header with title and action buttons -->
+<div class="flex justify-between items-center mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <mat-icon class="text-blue-600">table_view</mat-icon>
+        Time Entries
+      </h3>
+  
+  <div class="flex gap-3">
+    <!-- Export Menu -->
+    <button 
+      mat-button 
+      [matMenuTriggerFor]="exportMenu"
+      class="bg-green-500 text-white px-4 py-2 rounded-xl font-medium hover:bg-green-600 transition-all duration-300 flex items-center gap-2">
+      <mat-icon>file_download</mat-icon>
+      Export
+    </button>
+    <mat-menu #exportMenu="matMenu">
+      <button mat-menu-item (click)="exportToExcel()" [disabled]="isEmpty()">
+        <mat-icon>description</mat-icon>
+        <span>Export All to Excel</span>
+      </button>
+      <button mat-menu-item (click)="exportCurrentPageToExcel()" [disabled]="isEmpty()">
+        <mat-icon>pages</mat-icon>
+        <span>Export Current Page</span>
+      </button>
+    </mat-menu>
+
+    <!-- Add Entry Button -->
+    <button 
+      mat-raised-button 
+      (click)="onAddEntry()"
+      class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex items-center gap-2">
+      <mat-icon>add</mat-icon>
+      Add Entry
+    </button>
+  </div>
+</div>
+
+<!-- Loading state -->
+@if (isLoading()) {
+  <div class="flex justify-center items-center py-16">
+    <div class="flex flex-col items-center gap-4">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span class="text-gray-600 text-sm">Loading time entries...</span>
+    </div>
+  </div>
+}
+
+<!-- Table with entries - always visible when not loading -->
+@if (!isLoading()) {
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  
+  <!-- Table with fixed size for 5 entries -->
+  <div class="bg-white/95 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl overflow-hidden">
+    <!-- Fixed height container for exactly 5 rows -->
+    <div class="table-container" style="height: 400px; min-height: 400px; max-height: 400px;">
+      <div class="table-scroll-area" style="height: calc(100% - 64px); overflow-y: auto;">
+        <table 
+          mat-table 
+          [dataSource]="timeEntries()" 
+          matSort 
+          (matSortChange)="onSortChange($event)"
+          class="w-full professional-table">
+          
+          <!-- Date Column -->
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="date" 
+                class="bg-gray-50 text-gray-700 font-medium sticky top-0 z-10 border-b border-gray-200">
+              Date
+            </th>
+            <td mat-cell *matCellDef="let entry" [class.weekend-row]="entry && isWeekendDay(entry.date)" class="py-3">
+              @if (entry) {
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-gray-800">{{ formatDate(entry.date) }}</span>
+                  @if (isWeekendDay(entry.date)) {
+                    <mat-icon class="text-orange-400 text-sm" >weekend</mat-icon>
+                  }
+                </div>
+              }
+            </td>
+          </ng-container>
+
+          <!-- Empty State Column (spans all columns) -->
+          <ng-container matColumnDef="empty-state">
+            <td mat-cell *matCellDef="let entry" [attr.colspan]="displayedColumns.length" class="text-center py-16">
+              <div class="flex flex-col items-center">
+                <mat-icon class="text-5xl text-gray-400 mb-4">schedule</mat-icon>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No time entries recorded</h3>
+                <p class="text-gray-600 mb-6 max-w-md">Start by adding your first time entry to track your work hours.</p>
+                <button 
+                  mat-raised-button 
+                  (click)="onAddEntry()"
+                  class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:-translate-y-1 inline-flex items-center gap-2">
+                  <mat-icon>add</mat-icon>
+                  Add first entry
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Start Time Column -->
+          <ng-container matColumnDef="startTime">
+            <th mat-header-cell *matHeaderCellDef 
+                class="bg-gray-50 text-gray-700 font-medium sticky top-0 z-10 border-b border-gray-200">
+              Start Time
+            </th>
+            <td mat-cell *matCellDef="let entry" class="py-3">
+              @if (entry && !isPlaceholderEntry(entry)) {
+                <span class="font-mono text-sm bg-blue-50 px-2 py-1 rounded text-blue-800">{{ entry.startTime }}</span>
+              } @else if (entry && isPlaceholderEntry(entry)) {
+                <span class="text-gray-400 text-sm italic">No entry</span>
+              }
+            </td>
+          </ng-container>
+
+          <!-- End Time Column -->
+          <ng-container matColumnDef="endTime">
+            <th mat-header-cell *matHeaderCellDef 
+                class="bg-gray-50 text-gray-700 font-medium sticky top-0 z-10 border-b border-gray-200">
+              End Time
+            </th>
+            <td mat-cell *matCellDef="let entry" class="py-3">
+              @if (entry && !isPlaceholderEntry(entry)) {
+                <span class="font-mono text-sm bg-purple-50 px-2 py-1 rounded text-purple-800">{{ entry.endTime }}</span>
+              } @else if (entry && isPlaceholderEntry(entry)) {
+                <span class="text-gray-400 text-sm italic">No entry</span>
+              }
+            </td>
+          </ng-container>
+
+          <!-- Break Duration Column -->
+          <ng-container matColumnDef="breakDuration">
+            <th mat-header-cell *matHeaderCellDef 
+                class="bg-gray-50 text-gray-700 font-medium sticky top-0 z-10 border-b border-gray-200">
+              Break Duration
+            </th>
+            <td mat-cell *matCellDef="let entry" class="py-3">
+              @if (entry && !isPlaceholderEntry(entry)) {
+                <span class="font-mono text-sm bg-amber-50 px-2 py-1 rounded text-amber-800">{{ entry.breakDuration }}</span>
+              } @else if (entry && isPlaceholderEntry(entry)) {
+                <span class="text-gray-400 text-sm italic">No entry</span>
+              }
+            </td>
+          </ng-container>
+
+          <!-- Total Worked Time Column -->
+          <ng-container matColumnDef="totalWorkedTime">
+            <th mat-header-cell *matHeaderCellDef 
+                class="bg-gray-50 text-gray-700 font-medium sticky top-0 z-10 border-b border-gray-200">
+              Total Worked
+            </th>
+            <td mat-cell *matCellDef="let entry" class="py-3">
+              @if (entry && !isPlaceholderEntry(entry)) {
+                <span class="font-mono text-sm font-semibold bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full shadow-sm">
+                  {{ calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration) }}
+                </span>
+              } @else if (entry && isPlaceholderEntry(entry)) {
+                <span class="text-gray-400 text-sm italic">0:00</span>
+              }
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef 
+                class="bg-gray-50 text-gray-700 font-medium sticky top-0 z-10 border-b border-gray-200">
+              Status
+            </th>
+            <td mat-cell *matCellDef="let entry" class="py-3">
+              @if (entry && !isPlaceholderEntry(entry)) {
+                <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border"
+                     [ngClass]="{
+                       'bg-green-50 text-green-700 border-green-200': getStatusText(entry) === 'Complete',
+                       'bg-amber-50 text-amber-700 border-amber-200': getStatusText(entry) === 'In Progress',
+                       'bg-gray-50 text-gray-700 border-gray-200': getStatusText(entry) === 'Pending'
+                     }">
+                  <div class="w-2 h-2 rounded-full mr-2"
+                       [ngClass]="{
+                         'bg-green-500': getStatusText(entry) === 'Complete',
+                         'bg-amber-500': getStatusText(entry) === 'In Progress',
+                         'bg-gray-400': getStatusText(entry) === 'Pending'
+                       }"></div>
+                  {{ getStatusText(entry) }}
+                </div>
+              } @else if (entry && isPlaceholderEntry(entry)) {
+                <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">
+                  <div class="w-2 h-2 rounded-full mr-2 bg-gray-300"></div>
+                  No Entry
+                </div>
+              }
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef 
+                class="bg-gray-50 text-gray-700 font-medium sticky top-0 z-10 border-b border-gray-200">
+              Actions
+            </th>
+            <td mat-cell *matCellDef="let entry" class="py-3">
+              @if (entry && !isPlaceholderEntry(entry)) {
+                <div class="flex gap-1 justify-center">
+                  <button 
+                    mat-icon-button 
+                    [disabled]="shouldDisableActions(entry)"
+                    (click)="onEditEntry(entry)"
+                    [matTooltip]="shouldDisableActions(entry) ? 'Weekend entries cannot be edited' : 'Edit entry'"
+                    class="text-blue-600 hover:bg-blue-50">
+                    <mat-icon class="text-lg">edit</mat-icon>
+                  </button>
+                  <button 
+                    mat-icon-button 
+                    [disabled]="shouldDisableActions(entry)"
+                    (click)="onDeleteEntry(entry)"
+                    [matTooltip]="shouldDisableActions(entry) ? 'Weekend entries cannot be deleted' : 'Delete entry'"
+                    class="text-red-600 hover:bg-red-50">
+                    <mat-icon class="text-lg">delete</mat-icon>
+                  </button>
+                </div>
+              } @else if (entry && isPlaceholderEntry(entry)) {
+                <div class="flex gap-1 justify-center">
+                  @if (shouldDisableActions(entry)) {
+                    <span class="text-gray-400 text-sm italic px-2">Weekend</span>
+                  }
+                </div>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns" class="header-row"></tr>
+          
+          <!-- Empty state row when no real entries exist -->
+          @if (isEmpty()) {
+            <tr mat-row *matRowDef="let row; columns: ['empty-state'];" class="empty-state-row"></tr>
+          } @else {
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+                [class.hover:bg-blue-50]="row"
+                [class.weekend-row]="row && isWeekendDay(row.date)"
+                class="data-row transition-all duration-200"></tr>
+          }
+        </table>
+      </div>
+
+      <!-- Paginator - Fixed at bottom -->
+      <div class="paginator-container bg-gray-50 border-t border-gray-200" style="height: 64px;">
+        <mat-paginator 
+          #paginator
+          [length]="totalEntries()"
+          [pageSize]="currentPageSize()"
+          [pageSizeOptions]="pageSizeOptions"
+          [pageIndex]="currentPageIndex()"
+          (page)="onPageChange($event)"
+          [showFirstLastButtons]="true"
+          class="professional-paginator">
+        </mat-paginator>
+      </div>
+    </div>
+  </div>
+</div>
+}

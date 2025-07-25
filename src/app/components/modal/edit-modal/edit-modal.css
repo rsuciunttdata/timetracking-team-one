@@ -1,0 +1,36 @@
+/*shared modal styles */
+@import url('../shared-modal.css');
+
+/* Edit Modal Specific Styles - Orange Theme */
+
+.modal-header h2 mat-icon {
+  color: #ea580c !important;
+}
+
+.save-button {
+  background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3) !important;
+}
+
+.save-button:hover:not(:disabled) {
+  box-shadow: 0 8px 20px rgba(234, 88, 12, 0.4) !important;
+}
+
+.save-button:disabled {
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2) !important;
+}
+
+/* Preview card with orange accent */
+.preview-card {
+  border-color: rgba(234, 88, 12, 0.2) !important;
+}
+
+/* Delete button specific styling */
+.delete-button {
+  transition: all 0.3s ease;
+}
+
+.delete-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}

@@ -1,0 +1,26 @@
+/* Import shared modal styles */
+@import url('../shared-modal.css');
+
+/* Add Modal Specific Styles - Blue Theme */
+
+.modal-header h2 mat-icon {
+  color: #3b82f6 !important;
+}
+
+.save-button {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+}
+
+.save-button:hover:not(:disabled) {
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4) !important;
+}
+
+.save-button:disabled {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Preview card with blue accent */
+.preview-card {
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
