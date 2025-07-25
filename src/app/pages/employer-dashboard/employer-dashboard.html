@@ -1,0 +1,52 @@
+<mat-toolbar class="page-toolbar px-6 py-2 flex justify-between items-center bg-white shadow-md mt-4 mx-6">
+  <div class="flex items-center gap-3">
+    <mat-icon class="text-blue-600">schedule</mat-icon>
+    <span class="text-xl font-semibold text-gray-800">Timesheet</span>
+  </div>
+
+  <div class="text-gray-700 text-sm hidden sm:block">
+    Hi, <span class="font-medium capitalize">{{ username}}</span>!
+  </div>
+
+  <div class="flex items-center gap-3">
+    <button mat-icon-button (click)="onLogout()" aria-label="Logout">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>
+
+<!-- Header Section for Page Content -->
+<div class="mb-8 mt-4 mx-6">
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+        <mat-icon class="text-2xl text-white">groups</mat-icon>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold text-white drop-shadow-lg">Employer Dashboard</h1>
+        <p class="text-white/80 drop-shadow">View and manage employee timesheets</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto p-6 space-y-6">
+    <!-- Select angajat -->
+    <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Select employee</mat-label>
+        <mat-select [value]="selectedUserId()" (selectionChange)="onUserSelect($event.value)">
+            <mat-option *ngFor="let user of users()" [value]="user.id">{{ user.name }}</mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    <!-- Tabel pontaje -->
+    <div *ngIf="selectedUserId()">
+        <app-timesheet-table [entries]="entries()" [isAdmin]="true" (editEntry)="requestEdit($event)"
+            (deleteEntry)="validateEntry($event)">
+        </app-timesheet-table>
+
+        <div *ngIf="entries().length === 0" class="text-center text-gray-500 mt-6">
+            No time entries for this user.
+        </div>
+    </div>
+</div>

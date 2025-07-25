@@ -3,22 +3,16 @@ import { HttpClient } from '@angular/common/http';
 import { API_CONFIG, getApiUrl } from '../config/api.config';
 import { Observable, map } from 'rxjs';
 import { LoginResponse } from '../interfaces/api.interface';
+import { of } from 'rxjs';
+import { switchMap } from 'rxjs';
+import { User } from '../interfaces/user.interface';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   isLoggedIn = signal(false);
-  private username = signal<string | null>(null);
-
-  setUsername(email: string) {
-    const name = email.split('@')[0];
-    this.username.set(name);
-  }
-
-  getUsername(): string | null {
-    return this.username();
-  }
+  username = signal<string | null>(null);
 
   constructor(private http: HttpClient) {
     const savedLogin = localStorage.getItem('isLoggedIn');
@@ -30,19 +24,22 @@ export class AuthService {
     }
   }
 
-  login(email: string, password: string): Observable<'success' | 'invalid_email' | 'invalid_password'> {
-    return this.http.post<LoginResponse>(getApiUrl('AUTH'), { email, password }).pipe(
-      map(response => {
-        if (response.success) {
-          this.isLoggedIn.set(true);
-          this.setUsername(email);
+  login(email: string, password: string): Observable<'admin' | 'user' | 'invalid_email' | 'invalid_password'> {
+    return this.http.get<User[]>('/assets/users.json').pipe(
+      switchMap(users => {
+        const user = users.find(u => u.email === email);
+        if (!user) return of('invalid_email' as const);
+        if (user.password !== password) return of('invalid_password' as const);
 
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('username', email.split('@')[0]);
+        this.isLoggedIn.set(true);
+        this.username.set(user.name);
 
-          return 'success';
-        }
-        return response.errorCode || 'invalid_email';
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('username', user.name);
+        localStorage.setItem('userId', user.id);
+        localStorage.setItem('role', user.role);
+
+        return of(user.role as 'admin' | 'user');
       })
     );
   }
@@ -55,9 +52,15 @@ export class AuthService {
 
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('username');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('role');
   }
 
   isAuthenticated(): boolean {
     return this.isLoggedIn();
+  }
+
+  getUsername(): string | null {
+    return this.username();
   }
 }

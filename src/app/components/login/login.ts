@@ -46,20 +46,21 @@ export class Login {
       this.auth.login(email, password).subscribe(result => {
         console.log('Rezultat login:', result);
         switch (result) {
-          case 'success':
+          case 'admin':
+            this.router.navigate(['/employer-dashboard']);
+            break;
+          case 'user':
             this.router.navigate(['/timesheet']);
             break;
-
           case 'invalid_email':
-            this.errorMessage.set('Wrong email!');
+            this.errorMessage.set('Email incorect');
             break;
-
           case 'invalid_password':
-            this.errorMessage.set('Wrong password!');
+            this.errorMessage.set('Parolă greșită');
             break;
         }
 
-        if (result !== 'success') {
+        if (result === 'invalid_email' || result === 'invalid_password') {
           setTimeout(() => this.errorMessage.set(''), 5000);
         }
       });
