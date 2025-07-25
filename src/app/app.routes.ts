@@ -23,6 +23,11 @@ export const routes: Routes = [
     loadComponent: () => import('./components/coming-soon/coming-soon.component').then(m => m.ComingSoonComponent),
   },
   {
+    path:'employer-dashboard',
+    loadComponent: () =>import('./pages/employer-dashboard/employer-dashboard').then(m=>m.EmployerDashboard),
+
+  },
+  {
     path: '**',
     loadComponent: () => import('./components/not-found/not-found').then(m => m.NotFound)
   }

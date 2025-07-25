@@ -1,33 +1,37 @@
 <div class="timesheet-page">
-  <mat-toolbar class="page-toolbar">
-    <mat-icon>schedule</mat-icon>
-    <span class="toolbar-title">Timesheet</span>
-    <span class="toolbar-spacer"></span>
-    <span *ngIf="username" class="welcome-text">Hi, {{ username }}!</span>
-    <span class="toolbar-spacer"></span>
-    <button mat-raised-button color="primary" (click)="onAddNewEntry()">
-      <mat-icon>add</mat-icon>
-      Add Entry
-    </button>
-    <button mat-icon-button (click)="onLogout()" aria-label="Logout">
-      <mat-icon>logout</mat-icon>
-    </button>
+  <mat-toolbar class="page-toolbar px-6 py-2 flex justify-between items-center bg-white shadow-md mt-4 mx-6">
+    <div class="flex items-center gap-3">
+      <mat-icon class="text-blue-600">schedule</mat-icon>
+      <span class="text-xl font-semibold text-gray-800">Timesheet</span>
+    </div>
+    <div class="text-gray-700 text-sm hidden sm:block">
+      Hi, <span class="font-medium capitalize">{{ username }}</span>!
+    </div>
+    <div class="flex items-center gap-3">
+      <button mat-raised-button color="primary" (click)="onAddNewEntry()">
+        <mat-icon>add</mat-icon>
+        <span class="ml-1">Add Entry</span>
+      </button>
+      <button mat-icon-button (click)="onLogout()" aria-label="Logout">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
   </mat-toolbar>
-<div class="min-h-screen bg-transparent p-6">
-  <!-- Header Section -->
-  <div class="mb-8">
-    <div class="flex items-center justify-between mb-6">
-      <!-- Page Title with Brand Identity -->
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-          <mat-icon class="text-2xl text-white">schedule</mat-icon>
-        </div>
-        <div>
-          <h1 class="text-3xl font-bold text-white drop-shadow-lg">Timesheet</h1>
-          <p class="text-white/80 drop-shadow">Track and manage your time entries</p>
+  <div class="min-h-screen bg-transparent p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-6">
+        <!-- Page Title with Brand Identity -->
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+            <mat-icon class="text-2xl text-white">schedule</mat-icon>
+          </div>
+          <div>
+            <h1 class="text-3xl font-bold text-white drop-shadow-lg">Timesheet</h1>
+            <p class="text-white/80 drop-shadow">Track and manage your time entries</p>
+          </div>
         </div>
       </div>
-    </div>
 
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

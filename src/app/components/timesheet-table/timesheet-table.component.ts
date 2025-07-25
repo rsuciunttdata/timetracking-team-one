@@ -36,17 +36,18 @@ import { ExportService } from '../../services/export.service';
 })
 export class TimesheetTableComponent implements OnInit, OnChanges {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
-  
+
   // Inputs
   @Input() dateFilter: { startDate: Date | null; endDate: Date | null } | null = null;
-  
+  @Input() entries: TimeEntry[] = [];
+  @Input() isAdmin: boolean = false;
+
   // Outputs for parent communication
   @Output() editEntry = new EventEmitter<TimeEntry>();
   @Output() deleteEntry = new EventEmitter<TimeEntry>();
   @Output() addEntry = new EventEmitter<void>();
   @Output() summaryData = new EventEmitter<{ totalEntries: number; totalHours: string }>();
-  
-  
+
   private timeEntryService = inject(TimeEntryService);
   private exportService = inject(ExportService);
 
@@ -61,16 +62,16 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   filteredEntries = computed(() => {
     const entries = this.allEntries();
     const filter = this.dateFilterSignal();
-    
+
     if (!filter || (!filter.startDate && !filter.endDate)) {
       return entries;
     }
-    
+
     const filteredRealEntries = entries.filter(entry => {
       const entryDate = new Date(entry.date);
       const start = filter.startDate;
       const end = filter.endDate;
-      
+
       if (start && end) {
         return entryDate >= start && entryDate <= end;
       } else if (start) {
@@ -78,17 +79,17 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
       } else if (end) {
         return entryDate <= end;
       }
-      
+
       return true;
     });
 
     // Generate placeholder entries for missing dates in the range (only weekends)
     if (filter.startDate && filter.endDate) {
       const allDatesInRange = this.generateDateRange(filter.startDate, filter.endDate);
-      const existingDates = new Set(filteredRealEntries.map(entry => 
+      const existingDates = new Set(filteredRealEntries.map(entry =>
         new Date(entry.date).toDateString()
       ));
-      
+
       const placeholderEntries: TimeEntry[] = allDatesInRange
         .filter((date: Date) => !existingDates.has(date.toDateString()))
         .filter((date: Date) => this.isWeekendDay(date)) // Only create placeholders for weekends
@@ -102,11 +103,11 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
           createdAt: new Date(),
           updatedAt: new Date()
         }));
-      
+
       return [...filteredRealEntries, ...placeholderEntries]
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }
-    
+
     return filteredRealEntries;
   });
 
@@ -120,13 +121,13 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
 
     return [...entries].sort((a, b) => {
       const isAsc = sort.direction === 'asc';
-      
+
       if (sort.active === 'date') {
         const dateA = new Date(a.date).getTime();
         const dateB = new Date(b.date).getTime();
         return (dateA < dateB ? -1 : 1) * (isAsc ? 1 : -1);
       }
-      
+
       return 0;
     });
   });
@@ -134,10 +135,10 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   displayedEntries = computed(() => {
     const entries = this.sortedEntries();
     const page = this.pageState();
-    
+
     const startIndex = page.pageIndex * page.pageSize;
     const endIndex = startIndex + page.pageSize;
-    
+
     return entries.slice(startIndex, endIndex);
   });
 
@@ -150,7 +151,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     const entries = this.displayedEntries();
     const page = this.pageState();
     const emptyRows = Math.max(0, page.pageSize - entries.length);
-    
+
     const emptyEntries = Array(emptyRows).fill(null);
     return [...entries, ...emptyEntries];
   });
@@ -168,19 +169,20 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     const totalEntries = realEntries.length;
     
     const totalMinutes = realEntries.reduce((total, entry) => {
+
       const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
       const [hours, minutes] = workedTime.split(':').map(Number);
       return total + (hours * 60) + minutes;
     }, 0);
-    
+
     const totalHours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
     const totalHoursFormatted = `${totalHours}:${remainingMinutes.toString().padStart(2, '0')}`;
-    
+
     const summary = { totalEntries, totalHours: totalHoursFormatted };
-    
+
     setTimeout(() => this.summaryData.emit(summary), 0);
-    
+
     return summary;
   });
 
@@ -208,7 +210,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   private loadTimeEntries(): void {
     this.loading.set(true);
     const pagination = { page: 1, pageSize: 100 };
-    
+
     this.timeEntryService.getTimeEntries(pagination).subscribe({
       next: (response) => {
         this.allEntries.set(response.data);
@@ -308,7 +310,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     const breakTime = this.parseTime(breakDuration);
 
     const totalMinutes = end - start - breakTime;
-    
+
     if (totalMinutes < 0) {
       return '00:00';
     }
@@ -324,15 +326,15 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     if (!entry) {
       return 'No Entry';
     }
-    
+
     // If any required field is missing, it's not a complete entry
     if (!entry.startTime || !entry.endTime) {
       return 'Pending';
     }
-    
+
     const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
     const [hours] = workedTime.split(':').map(Number);
-    
+
     if (hours >= 8) {
       return 'Complete';
     } else if (hours > 0) {
@@ -361,12 +363,12 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     const dates: Date[] = [];
     const currentDate = new Date(startDate);
     const end = new Date(endDate);
-    
+
     while (currentDate <= end) {
       dates.push(new Date(currentDate));
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    
+
     return dates;
   }
 
