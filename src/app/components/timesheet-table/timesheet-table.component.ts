@@ -9,9 +9,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatMenuModule } from '@angular/material/menu';
 
 import { TimeEntry } from '../../interfaces/time-entry.interface';
 import { TimeEntryService } from '../../services/time-entry.service';
+import { ExportService } from '../../services/export.service';
 
 @Component({
   selector: 'app-timesheet-table',
@@ -26,7 +28,8 @@ import { TimeEntryService } from '../../services/time-entry.service';
     MatCardModule,
     MatTooltipModule,
     MatPaginatorModule,
-    MatChipsModule
+    MatChipsModule,
+    MatMenuModule
   ],
   templateUrl: './timesheet-table.component.html',
   styleUrls: ['./timesheet-table.component.css']
@@ -46,6 +49,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   @Output() summaryData = new EventEmitter<{ totalEntries: number; totalHours: string }>();
 
   private timeEntryService = inject(TimeEntryService);
+  private exportService = inject(ExportService);
 
   // Signals for state management
   private allEntries = signal<TimeEntry[]>([]);
@@ -79,7 +83,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
       return true;
     });
 
-    // Generate placeholder entries for missing dates in the range
+    // Generate placeholder entries for missing dates in the range (only weekends)
     if (filter.startDate && filter.endDate) {
       const allDatesInRange = this.generateDateRange(filter.startDate, filter.endDate);
       const existingDates = new Set(filteredRealEntries.map(entry =>
@@ -88,9 +92,10 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
 
       const placeholderEntries: TimeEntry[] = allDatesInRange
         .filter((date: Date) => !existingDates.has(date.toDateString()))
+        .filter((date: Date) => this.isWeekendDay(date)) // Only create placeholders for weekends
         .map((date: Date) => ({
-          id: `placeholder-${date.toISOString()}`,
-          userId: 'current-user',
+          id: `table-placeholder-${date.toISOString()}`,
+          userId: 'table-placeholder',
           date: date,
           startTime: '',
           endTime: '',
@@ -138,6 +143,11 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   });
 
   timeEntries = computed(() => {
+    if (this.isEmpty()) {
+      // Return a single empty row for the empty state
+      return [null];
+    }
+    
     const entries = this.displayedEntries();
     const page = this.pageState();
     const emptyRows = Math.max(0, page.pageSize - entries.length);
@@ -147,7 +157,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   });
 
   isLoading = computed(() => this.loading());
-  isEmpty = computed(() => !this.loading() && this.filteredEntries().length === 0);
+  isEmpty = computed(() => !this.loading() && this.filteredEntries().filter(entry => !this.isPlaceholderEntry(entry)).length === 0);
   totalEntries = computed(() => this.filteredEntries().length);
   currentPageSize = computed(() => this.pageState().pageSize);
   currentPageIndex = computed(() => this.pageState().pageIndex);
@@ -155,9 +165,11 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   // Summary data computed signal
   summaryInfo = computed(() => {
     const entries = this.filteredEntries();
-    const totalEntries = entries.length;
+    const realEntries = entries.filter(entry => !this.isPlaceholderEntry(entry));
+    const totalEntries = realEntries.length;
+    
+    const totalMinutes = realEntries.reduce((total, entry) => {
 
-    const totalMinutes = entries.reduce((total, entry) => {
       const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
       const [hours, minutes] = workedTime.split(':').map(Number);
       return total + (hours * 60) + minutes;
@@ -180,7 +192,14 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   ngOnChanges(): void {
     if (this.dateFilter) {
       this.dateFilterSignal.set(this.dateFilter);
-      setTimeout(() => this.summaryInfo(), 0);
+      // Reload data when date filter changes
+      this.loadTimeEntries();
+      // Reset pagination to first page after data loads
+      setTimeout(() => {
+        const currentPageSize = this.pageState().pageSize;
+        this.pageState.set({ pageIndex: 0, pageSize: currentPageSize, length: 0 });
+        this.summaryInfo();
+      }, 0);
     }
   }
 
@@ -229,6 +248,52 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     this.addEntry.emit();
   }
 
+  /**
+   * Export filtered entries to Excel using the ExportService
+   */
+  async exportToExcel(): Promise<void> {
+    // Only export real entries, not table placeholders
+    const entries = this.filteredEntries().filter(entry => !this.isPlaceholderEntry(entry));
+    
+    const dateFilter = this.dateFilterSignal();
+    const filename = this.exportService.generateFilenameWithDateRange(
+      dateFilter?.startDate || undefined,
+      dateFilter?.endDate || undefined
+    );
+
+    try {
+      await this.exportService.exportTimeEntriesToExcel(entries, {
+        filename,
+        includeSummary: true,
+        worksheetName: 'Time Entries'
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      // You could show a user-friendly error message here
+    }
+  }
+
+  /**
+   * Export current page to Excel using the ExportService
+   */
+  async exportCurrentPageToExcel(): Promise<void> {
+    // Only export real entries, not table placeholders or null entries
+    const entries = this.displayedEntries().filter(entry => entry !== null && !this.isPlaceholderEntry(entry));
+    
+    const filename = this.exportService.generatePageFilename(this.currentPageIndex());
+
+    try {
+      await this.exportService.exportTimeEntriesToExcel(entries, {
+        filename,
+        includeSummary: false,
+        worksheetName: `Page ${this.currentPageIndex() + 1}`
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      // You could show a user-friendly error message here
+    }
+  }
+
 
   formatDate(date: Date): string {
     return new Intl.DateTimeFormat('en-US', {
@@ -257,8 +322,8 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   }
 
   getStatusText(entry: TimeEntry): string {
-    // Check if it's a placeholder entry
-    if (this.isPlaceholderEntry(entry)) {
+    // Check if it's a null/undefined entry
+    if (!entry) {
       return 'No Entry';
     }
 
@@ -279,26 +344,9 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     }
   }
 
-  getStatusClass(entry: TimeEntry): string {
-    const status = this.getStatusText(entry);
-
-    switch (status) {
-      case 'Full Day':
-        return 'status-full-day';
-      case 'Partial Day':
-        return 'status-partial-day';
-      case 'Under Time':
-        return 'status-under-time';
-      case 'No Entry':
-        return 'status-no-entry';
-      default:
-        return 'bg-gray-500 text-white';
-    }
-  }
-
   isPlaceholderEntry(entry: TimeEntry | null): boolean {
     if (!entry) return true;
-    return entry.id.startsWith('placeholder-') || !entry.startTime || !entry.endTime;
+    return entry.id.startsWith('table-placeholder-') || entry.userId === 'table-placeholder';
   }
 
   isWeekendDay(date: Date): boolean {

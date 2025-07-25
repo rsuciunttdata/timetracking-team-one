@@ -16,7 +16,7 @@ export const routes: Routes = [
 
   {
     path: 'timesheet',
-    loadComponent: () => import('./pages/timesheet-page.component').then(m => m.TimesheetPageComponent),
+    loadComponent: () => import('./pages/timesheet-page/timesheet-page.component').then(m => m.TimesheetPageComponent),
   },
   {
     path: 'coming-soon',

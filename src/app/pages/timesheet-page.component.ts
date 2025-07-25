@@ -15,7 +15,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { TimesheetTableComponent } from '../components/timesheet-table/timesheet-table.component';
 import { AddModal } from '../components/modal/add-modal/add-modal';
 import { EditModal } from '../components/modal/edit-modal/edit-modal';
-import { TimeEntryService } from '../services/time-entry.service';
+import { TimeEntryService } from '../../app/services/time-entry.service';
 import { TimeEntry } from '../interfaces/time-entry.interface';
 
 import { AuthService } from '../services/auth.service';
@@ -37,8 +37,8 @@ import { Router } from '@angular/router';
     MatNativeDateModule,
     MatSnackBarModule,
     MatDialogModule,
-    TimesheetTableComponent,
-  ],
+    TimesheetTableComponent
+],
   templateUrl: './timesheet-page.component.html',
   styleUrls: ['./timesheet-page.component.css']
 })
@@ -135,11 +135,13 @@ export class TimesheetPageComponent implements OnInit {
 
   onDateRangeChange(): void {
     console.log('Date range changed:', this.dateFilter());
+    this.refreshAllData();
   }
 
   clearDateFilters(): void {
     this.startDateSignal.set(null);
     this.endDateSignal.set(null);
+    this.refreshAllData();
   }
 
   // Quick filter methods
@@ -151,6 +153,7 @@ export class TimesheetPageComponent implements OnInit {
 
     this.startDateSignal.set(startOfDay);
     this.endDateSignal.set(endOfDay);
+    this.refreshAllData();
   }
 
   setThisWeekFilter(): void {
@@ -165,6 +168,7 @@ export class TimesheetPageComponent implements OnInit {
 
     this.startDateSignal.set(startOfWeek);
     this.endDateSignal.set(endOfWeek);
+    this.refreshAllData();
   }
 
   setThisMonthFilter(): void {
@@ -177,6 +181,7 @@ export class TimesheetPageComponent implements OnInit {
 
     this.startDateSignal.set(startOfMonth);
     this.endDateSignal.set(endOfMonth);
+    this.refreshAllData();
   }
 
   setLast30DaysFilter(): void {
@@ -190,6 +195,7 @@ export class TimesheetPageComponent implements OnInit {
 
     this.startDateSignal.set(thirtyDaysAgo);
     this.endDateSignal.set(endOfToday);
+    this.refreshAllData();
   }
 
   // Helper method to check if a quick filter is active
@@ -245,12 +251,6 @@ export class TimesheetPageComponent implements OnInit {
       default:
         return false;
     }
-  }
-
-  private isSameDay(date1: Date, date2: Date): boolean {
-    return date1.getFullYear() === date2.getFullYear() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getDate() === date2.getDate();
   }
 
   private isSameDateTime(date1: Date, date2: Date): boolean {
@@ -397,9 +397,8 @@ export class TimesheetPageComponent implements OnInit {
   // Method to refresh all data
   refreshAllData(): void {
     this.loadTimeEntries();
-    if (this.timesheetTable) {
-      this.timesheetTable.refreshData();
-    }
+    // The table will automatically refresh when dateFilter changes through ngOnChanges
+    // No need to manually call timesheetTable.refreshData()
   }
 
   // Expose summary data for template
