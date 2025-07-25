@@ -86,6 +86,15 @@ function handleGetTimeEntries(req: any): ApiResponse<any> {
       return createErrorResponse('Time entry not found', 404);
     }
     
+    // Validate user permissions for single entry access
+    const currentUserId = localStorage.getItem('userId');
+    const currentUserRole = localStorage.getItem('role');
+    
+    // Allow admin to access any entry, or user to access their own entry
+    if (currentUserRole !== 'admin' && entry.userId !== currentUserId) {
+      return createErrorResponse('Access denied: You can only view your own time entries', 403);
+    }
+    
     console.log('📄 Returning single entry:', entryId);
     return createSuccessResponse(entry);
   }
@@ -94,19 +103,48 @@ function handleGetTimeEntries(req: any): ApiResponse<any> {
   const params = req.params || new URLSearchParams(url.split('?')[1] || '');
   const page = parseInt(params.get('page') || '1', 10);
   const pageSize = parseInt(params.get('pageSize') || '10', 10);
+  const requestedUserId = params.get('userId');
   
+  // Get current user context from localStorage
+  const currentUserId = localStorage.getItem('userId');
+  const currentUserRole = localStorage.getItem('role');
+  
+  console.log('📄 User context:', { currentUserId, currentUserRole, requestedUserId });
   console.log('📄 Pagination:', { page, pageSize });
   
+  // Filter entries based on user permissions
+  let filteredEntries = mockTimeEntries;
+  
+  if (currentUserRole === 'admin') {
+    // Admin can see all entries or filter by specific user
+    if (requestedUserId) {
+      filteredEntries = mockTimeEntries.filter(entry => entry.userId === requestedUserId);
+      console.log('📄 Admin filtering by user:', requestedUserId);
+    } else {
+      console.log('📄 Admin viewing all entries');
+    }
+  } else {
+    // Regular users can only see their own entries
+    if (currentUserId) {
+      filteredEntries = mockTimeEntries.filter(entry => entry.userId === currentUserId);
+      console.log('📄 User viewing own entries:', currentUserId);
+    } else {
+      console.log('📄 No user authenticated, returning empty');
+      filteredEntries = [];
+    }
+  }
+  
+  // Apply pagination to filtered entries
   const startIndex = (page - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const paginatedEntries = mockTimeEntries.slice(startIndex, endIndex);
+  const paginatedEntries = filteredEntries.slice(startIndex, endIndex);
 
-  console.log('📄 Returning entries:', paginatedEntries.length);
+  console.log('📄 Returning entries:', paginatedEntries.length, 'of', filteredEntries.length, 'total filtered');
 
   // Return the correct TimeEntryResponse structure
   const timeEntryResponse = {
     data: paginatedEntries,
-    total: mockTimeEntries.length,
+    total: filteredEntries.length, // Total of filtered entries, not all entries
     page,
     pageSize
   };
@@ -118,11 +156,18 @@ function handleCreateTimeEntry(req: any): ApiResponse<TimeEntry> {
   console.log('➕ CREATE time entry');
   
   const requestData: CreateTimeEntryRequest = req.body;
+  const currentUserId = localStorage.getItem('userId');
+  const currentUserRole = localStorage.getItem('role');
   
   // Validate required fields
   if (!requestData.userId || !requestData.date || !requestData.startTime || 
       !requestData.endTime || !requestData.breakDuration) {
     return createErrorResponse('Missing required fields', 400);
+  }
+  
+  // Validate user permissions
+  if (currentUserRole !== 'admin' && requestData.userId !== currentUserId) {
+    return createErrorResponse('Access denied: You can only create entries for yourself', 403);
   }
   
   // Create new entry with generated ID
@@ -148,6 +193,8 @@ function handleUpdateTimeEntry(req: any): ApiResponse<TimeEntry> {
   console.log('✏️ UPDATE time entry');
   
   const requestData: UpdateTimeEntryRequest = req.body;
+  const currentUserId = localStorage.getItem('userId');
+  const currentUserRole = localStorage.getItem('role');
   
   if (!requestData.id) {
     return createErrorResponse('Entry ID is required for update', 400);
@@ -159,8 +206,14 @@ function handleUpdateTimeEntry(req: any): ApiResponse<TimeEntry> {
     return createErrorResponse('Time entry not found', 404);
   }
   
-  // Update the entry
   const existingEntry = mockTimeEntries[entryIndex];
+  
+  // Validate user permissions
+  if (currentUserRole !== 'admin' && existingEntry.userId !== currentUserId) {
+    return createErrorResponse('Access denied: You can only update your own time entries', 403);
+  }
+  
+  // Update the entry
   const updatedEntry: TimeEntry = {
     ...existingEntry,
     userId: requestData.userId || existingEntry.userId,
@@ -180,6 +233,9 @@ function handleUpdateTimeEntry(req: any): ApiResponse<TimeEntry> {
 function handleDeleteTimeEntry(req: any): ApiResponse<void> {
   console.log('🗑️ DELETE time entry');
   
+  const currentUserId = localStorage.getItem('userId');
+  const currentUserRole = localStorage.getItem('role');
+  
   // Extract ID from URL
   const url = req.url || '';
   const urlParts = url.split('/');
@@ -193,6 +249,13 @@ function handleDeleteTimeEntry(req: any): ApiResponse<void> {
   
   if (entryIndex === -1) {
     return createErrorResponse('Time entry not found', 404);
+  }
+  
+  const existingEntry = mockTimeEntries[entryIndex];
+  
+  // Validate user permissions
+  if (currentUserRole !== 'admin' && existingEntry.userId !== currentUserId) {
+    return createErrorResponse('Access denied: You can only delete your own time entries', 403);
   }
   
   // Remove the entry
