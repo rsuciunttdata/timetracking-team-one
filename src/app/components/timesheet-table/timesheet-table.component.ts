@@ -211,7 +211,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     this.loading.set(true);
     const pagination = { page: 1, pageSize: 100 };
 
-    this.timeEntryService.getTimeEntries(pagination).subscribe({
+    this.timeEntryService.getUserTimeEntries(pagination).subscribe({
       next: (response) => {
         this.allEntries.set(response.data);
         this.loading.set(false);

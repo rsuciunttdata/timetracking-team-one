@@ -114,7 +114,7 @@ export class TimesheetPageComponent implements OnInit {
   private loadTimeEntries(): void {
     const pagination = { page: 1, pageSize: 100 };
 
-    this.timeEntryService.getTimeEntries(pagination).subscribe({
+    this.timeEntryService.getUserTimeEntries(pagination).subscribe({
       next: (response) => {
         this.allTimeEntriesSignal.set(response.data);
       },
@@ -355,8 +355,7 @@ export class TimesheetPageComponent implements OnInit {
       maxHeight: '100vh',
       panelClass: 'responsive-dialog',
       data: { 
-        prefilledDate: new Date(),
-        userId: 'current-user' // This should come from auth service
+        prefilledDate: new Date()
       },
       disableClose: true
     });
@@ -375,8 +374,7 @@ export class TimesheetPageComponent implements OnInit {
       maxHeight: '100vh',
       panelClass: 'responsive-dialog',
       data: { 
-        prefilledDate: date,
-        userId: 'current-user' // This should come from auth service
+        prefilledDate: date
       },
       disableClose: true
     });
