@@ -55,6 +55,8 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   @Output() deleteEntry = new EventEmitter<TimeEntry>();
   @Output() addEntry = new EventEmitter<void>();
   @Output() summaryData = new EventEmitter<{ totalEntries: number; totalHours: string }>();
+  @Output() validateEntry = new EventEmitter<TimeEntry>();
+  @Output() requestEdit = new EventEmitter<TimeEntry>();
 
   private timeEntryService = inject(TimeEntryService);
   private exportService = inject(ExportService);
@@ -389,5 +391,13 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     if (!timeString) return 0;
     const [hours, minutes] = timeString.split(':').map(Number);
     return hours * 60 + minutes;
+  }
+
+  onValidateEntry(entry: TimeEntry) {
+    this.validateEntry.emit(entry);
+  }
+
+  onRequestEditEntry(entry: TimeEntry) {
+    this.requestEdit.emit(entry);
   }
 }
