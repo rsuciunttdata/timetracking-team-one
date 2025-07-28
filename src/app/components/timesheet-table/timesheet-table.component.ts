@@ -36,11 +36,19 @@ import { ExportService } from '../../services/export.service';
 })
 export class TimesheetTableComponent implements OnInit, OnChanges {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
+  private _entries = signal<TimeEntry[]>([]);
 
   // Inputs
   @Input() dateFilter: { startDate: Date | null; endDate: Date | null } | null = null;
-  @Input() entries: TimeEntry[] = [];
+  //@Input() entries: TimeEntry[] = [];
   @Input() isAdmin: boolean = false;
+
+  @Input() set entries(value: TimeEntry[] | null | undefined) {
+    if (value) {
+      this._entries.set(value);
+      this.allEntries.set(value); // 🔥 datele externe suprascriu localul
+    }
+  }
 
   // Outputs for parent communication
   @Output() editEntry = new EventEmitter<TimeEntry>();
@@ -147,7 +155,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
       // Return a single empty row for the empty state
       return [null];
     }
-    
+
     const entries = this.displayedEntries();
     const page = this.pageState();
     const emptyRows = Math.max(0, page.pageSize - entries.length);
@@ -167,7 +175,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     const entries = this.filteredEntries();
     const realEntries = entries.filter(entry => !this.isPlaceholderEntry(entry));
     const totalEntries = realEntries.length;
-    
+
     const totalMinutes = realEntries.reduce((total, entry) => {
 
       const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
@@ -193,7 +201,10 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     if (this.dateFilter) {
       this.dateFilterSignal.set(this.dateFilter);
       // Reload data when date filter changes
-      this.loadTimeEntries();
+      if (this._entries().length === 0) {
+        this.loadTimeEntries(); // doar dacă nu am primit entries
+      }
+      //this.loadTimeEntries();
       // Reset pagination to first page after data loads
       setTimeout(() => {
         const currentPageSize = this.pageState().pageSize;
@@ -204,7 +215,9 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    this.loadTimeEntries();
+    if (this._entries().length === 0) {
+      this.loadTimeEntries(); // doar pentru user
+    }
   }
 
   private loadTimeEntries(): void {
@@ -254,7 +267,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   async exportToExcel(): Promise<void> {
     // Only export real entries, not table placeholders
     const entries = this.filteredEntries().filter(entry => !this.isPlaceholderEntry(entry));
-    
+
     const dateFilter = this.dateFilterSignal();
     const filename = this.exportService.generateFilenameWithDateRange(
       dateFilter?.startDate || undefined,
@@ -279,7 +292,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   async exportCurrentPageToExcel(): Promise<void> {
     // Only export real entries, not table placeholders or null entries
     const entries = this.displayedEntries().filter(entry => entry !== null && !this.isPlaceholderEntry(entry));
-    
+
     const filename = this.exportService.generatePageFilename(this.currentPageIndex());
 
     try {
