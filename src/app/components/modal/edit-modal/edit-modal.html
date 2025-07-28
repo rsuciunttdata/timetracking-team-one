@@ -58,18 +58,36 @@
         }
       </mat-form-field>
 
-      <!-- Break Duration Field -->
-      <mat-form-field appearance="outline" class="form-field full-width">
-        <mat-label>Break Duration</mat-label>
+      <!-- Break Start Time Field -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Break Start Time</mat-label>
         <input matInput 
                type="time"
-               formControlName="breakDuration"
-               placeholder="01:00">
-        @if (timeEntryForm.get('breakDuration')?.hasError('required')) {
-          <mat-error>Break duration is required</mat-error>
+               formControlName="breakStartTime"
+               placeholder="12:00">
+        @if (timeEntryForm.get('breakStartTime')?.hasError('required')) {
+          <mat-error>Break start time is required</mat-error>
         }
-        @if (timeEntryForm.get('breakDuration')?.hasError('pattern')) {
+        @if (timeEntryForm.get('breakStartTime')?.hasError('pattern')) {
           <mat-error>Please enter a valid time format (HH:MM)</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- Break End Time Field -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Break End Time</mat-label>
+        <input matInput 
+               type="time"
+               formControlName="breakEndTime"
+               placeholder="12:30">
+        @if (timeEntryForm.get('breakEndTime')?.hasError('required')) {
+          <mat-error>Break end time is required</mat-error>
+        }
+        @if (timeEntryForm.get('breakEndTime')?.hasError('pattern')) {
+          <mat-error>Please enter a valid time format (HH:MM)</mat-error>
+        }
+        @if (timeEntryForm.get('breakEndTime')?.hasError('breakEndTimeBeforeStart')) {
+          <mat-error>Break end time must be after break start time</mat-error>
         }
       </mat-form-field>
     </div>

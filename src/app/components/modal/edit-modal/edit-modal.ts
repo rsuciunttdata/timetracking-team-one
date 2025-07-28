@@ -51,8 +51,8 @@ export class EditModal implements OnInit {
   isSubmitting = computed(() => this.submitting());
   previewWorkedTime = computed(() => {
     const values = this.formValues();
-    if (values.startTime && values.endTime && values.breakDuration) {
-      return this.calculateWorkedTime(values.startTime, values.endTime, values.breakDuration);
+    if (values.startTime && values.endTime && values.breakStartTime && values.breakEndTime) {
+      return this.calculateWorkedTime(values.startTime, values.endTime, values.breakStartTime, values.breakEndTime);
     }
     return '00:00';
   });
@@ -64,14 +64,27 @@ export class EditModal implements OnInit {
   private initializeForm(): void {
     const entry = this.data.timeEntry;
     
+    // Convert existing breakDuration to breakStartTime and breakEndTime
+    // For now, we'll assume break starts 4 hours after work start
+    // This is a temporary solution until we have actual break start/end times in data
+    const workStartMinutes = this.parseTime(entry.startTime);
+    const breakDurationMinutes = this.parseTime(entry.breakDuration);
+    const breakStartMinutes = workStartMinutes + 240; // 4 hours after start
+    const breakEndMinutes = breakStartMinutes + breakDurationMinutes;
+    
+    const breakStartTime = this.minutesToTime(breakStartMinutes);
+    const breakEndTime = this.minutesToTime(breakEndMinutes);
+    
     this.timeEntryForm = this.fb.group({
       date: [entry.date, [Validators.required]],
       startTime: [entry.startTime, [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
       endTime: [entry.endTime, [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
-      breakDuration: [entry.breakDuration, [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]]
+      breakStartTime: [breakStartTime, [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
+      breakEndTime: [breakEndTime, [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]]
     });
 
     this.timeEntryForm.get('endTime')?.addValidators(this.endTimeValidator.bind(this));
+    this.timeEntryForm.get('breakEndTime')?.addValidators(this.breakEndTimeValidator.bind(this));
 
     this.timeEntryForm.valueChanges.subscribe(values => {
       this.formValues.set(values);
@@ -99,18 +112,49 @@ export class EditModal implements OnInit {
     return null;
   }
 
+  private breakEndTimeValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value || !this.timeEntryForm) {
+      return null;
+    }
+
+    const breakStartTime = this.timeEntryForm.get('breakStartTime')?.value;
+    if (!breakStartTime) {
+      return null;
+    }
+
+    const breakStartMinutes = this.parseTime(breakStartTime);
+    const breakEndMinutes = this.parseTime(control.value);
+
+    if (breakEndMinutes <= breakStartMinutes) {
+      return { breakEndTimeBeforeStart: true };
+    }
+
+    return null;
+  }
+
   onSave(): void {
     if (this.timeEntryForm.valid && !this.submitting()) {
       this.submitting.set(true);
 
       const formValue = this.timeEntryForm.value;
+      
+      // Calculate break duration from break start and end times
+      const breakStart = this.parseTime(formValue.breakStartTime);
+      const breakEnd = this.parseTime(formValue.breakEndTime);
+      const breakDurationMinutes = breakEnd - breakStart;
+      
+      // Convert break duration back to HH:MM format
+      const breakHours = Math.floor(breakDurationMinutes / 60);
+      const breakMins = breakDurationMinutes % 60;
+      const breakDuration = `${breakHours.toString().padStart(2, '0')}:${breakMins.toString().padStart(2, '0')}`;
+      
       const timeEntry: UpdateTimeEntryRequest = {
         id: this.data.timeEntry.id,
         userId: this.data.timeEntry.userId,
         date: formValue.date,
         startTime: formValue.startTime,
         endTime: formValue.endTime,
-        breakDuration: formValue.breakDuration
+        breakDuration: breakDuration
       };
 
       // Use the actual service to make HTTP request
@@ -151,12 +195,21 @@ export class EditModal implements OnInit {
     }
   }
 
-  private calculateWorkedTime(startTime: string, endTime: string, breakDuration: string): string {
+  private calculateWorkedTime(startTime: string, endTime: string, breakStartTime: string, breakEndTime: string): string {
     const start = this.parseTime(startTime);
     const end = this.parseTime(endTime);
-    const breakTime = this.parseTime(breakDuration);
+    const breakStart = this.parseTime(breakStartTime);
+    const breakEnd = this.parseTime(breakEndTime);
 
-    const totalMinutes = end - start - breakTime;
+    // Calculate break duration
+    const breakDuration = breakEnd - breakStart;
+    
+    // If break times are invalid, return 00:00
+    if (breakDuration < 0) {
+      return '00:00';
+    }
+
+    const totalMinutes = end - start - breakDuration;
     
     if (totalMinutes < 0) {
       return '00:00';
@@ -177,5 +230,11 @@ export class EditModal implements OnInit {
     if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return 0;
     
     return hours * 60 + minutes;
+  }
+
+  private minutesToTime(totalMinutes: number): string {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   }
 }
