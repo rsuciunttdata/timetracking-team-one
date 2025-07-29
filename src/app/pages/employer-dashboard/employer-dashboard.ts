@@ -55,16 +55,6 @@ export class EmployerDashboard {
     });
   }
 
-  validateEntry(entry: TimeEntry) {
-    console.log(`Validated entry ${entry.id}`);
-    // TODO: actualizare stare (ex: status: 'validated')
-  }
-
-  requestEdit(entry: TimeEntry) {
-    console.log(`Request modification for entry ${entry.id}`);
-    // TODO: marcaj stare sau comentariu
-  }
-
   onValidate(entry: TimeEntry): void {
     console.log('Validated entry', entry.id);
     // TODO: trimite update către backend sau simulează schimbarea statusului
