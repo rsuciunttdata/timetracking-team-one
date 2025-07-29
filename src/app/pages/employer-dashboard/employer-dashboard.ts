@@ -65,6 +65,26 @@ export class EmployerDashboard {
     // TODO: marcaj stare sau comentariu
   }
 
+  onValidate(entry: TimeEntry): void {
+    console.log('Validated entry', entry.id);
+    // TODO: trimite update către backend sau simulează schimbarea statusului
+  }
+
+  onRequestEdit(entry: TimeEntry): void {
+    console.log('Request modification for entry', entry.id);
+    // TODO: trimite update către backend sau marchează cu status "needs_modification"
+  }
+
+  onEdit(entry: TimeEntry) {
+    console.log(`Editing entry ${entry.id}`);
+    // Deschide un dialog sau navighează către formularul de editare
+  }
+
+  onDelete(entry: TimeEntry) {
+    console.log(`Deleted entry ${entry.id}`);
+    // TODO: Apelează serviciul pentru a șterge entry-ul
+  }
+
   selectedUserName(): string {
     const user = this.users().find(u => u.id === this.selectedUserId());
     return user ? user.name : '';

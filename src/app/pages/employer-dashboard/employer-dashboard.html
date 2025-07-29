@@ -45,7 +45,8 @@
 
       <!-- TABEL: doar când avem date -->
       <app-timesheet-table *ngIf="userEntries.length > 0" [entries]="userEntries" [isAdmin]="true"
-        (editEntry)="requestEdit($event)" (deleteEntry)="validateEntry($event)">
+        (editEntry)="onEdit($event)" (deleteEntry)="onDelete($event)" (validateEntry)="onValidate($event)"
+        (requestEditEntry)="onRequestEdit($event)">
       </app-timesheet-table>
 
       <!-- Mesaj fallback -->

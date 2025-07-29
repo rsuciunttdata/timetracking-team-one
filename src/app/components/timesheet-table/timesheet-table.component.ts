@@ -46,7 +46,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   @Input() set entries(value: TimeEntry[] | null | undefined) {
     if (value) {
       this._entries.set(value);
-      this.allEntries.set(value); // 🔥 datele externe suprascriu localul
+      this.allEntries.set(value); // datele externe suprascriu localul
     }
   }
 
@@ -56,7 +56,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   @Output() addEntry = new EventEmitter<void>();
   @Output() summaryData = new EventEmitter<{ totalEntries: number; totalHours: string }>();
   @Output() validateEntry = new EventEmitter<TimeEntry>();
-  @Output() requestEdit = new EventEmitter<TimeEntry>();
+  @Output() requestEditEntry = new EventEmitter<TimeEntry>();
 
   private timeEntryService = inject(TimeEntryService);
   private exportService = inject(ExportService);
@@ -263,6 +263,8 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     this.addEntry.emit();
   }
 
+  
+
   /**
    * Export filtered entries to Excel using the ExportService
    */
@@ -398,6 +400,6 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   }
 
   onRequestEditEntry(entry: TimeEntry) {
-    this.requestEdit.emit(entry);
+    this.requestEditEntry.emit(entry);
   }
 }
