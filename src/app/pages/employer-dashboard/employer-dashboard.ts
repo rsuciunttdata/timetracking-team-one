@@ -73,6 +73,16 @@ export class EmployerDashboard {
   onDelete(entry: TimeEntry) {
     console.log(`Deleted entry ${entry.id}`);
     // TODO: Apelează serviciul pentru a șterge entry-ul
+    this.timeEntryService.deleteTimeEntry(entry.id).subscribe({
+      next: () => {
+        console.log(`Successfully deleted entry ${entry.id}`);
+        this.loadEntries(this.selectedUserId()!);
+      },
+      error: (err) => {
+        console.error(`Error deleting entry ${entry.id}:`, err);
+        alert('Failed to delete entry. Please try again.');
+      }
+    })
   }
 
   selectedUserName(): string {
