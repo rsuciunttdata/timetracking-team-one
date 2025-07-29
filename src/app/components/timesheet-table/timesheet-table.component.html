@@ -196,11 +196,11 @@
                 </button>
 
                 <mat-menu #adminMenu="matMenu">
-                  <button mat-menu-item (click)="onValidateEntry(entry)">
+                  <button mat-menu-item *ngIf="isAdmin" (click)="onValidateEntry(entry)">
                     <mat-icon class="text-green-600">check_circle</mat-icon>
                     <span>Validate</span>
                   </button>
-                  <button mat-menu-item (click)="onRequestEditEntry(entry)">
+                  <button mat-menu-item *ngIf="isAdmin" (click)="onRequestEditEntry(entry)">
                     <mat-icon class="text-yellow-600">edit_note</mat-icon>
                     <span>Send for modification</span>
                   </button>
