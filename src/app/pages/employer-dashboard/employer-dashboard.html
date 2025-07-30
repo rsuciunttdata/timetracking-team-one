@@ -31,22 +31,29 @@
 </div>
 
 <div class="max-w-4xl mx-auto p-6 space-y-6">
-    <!-- Select angajat -->
-    <mat-form-field appearance="fill" class="w-full">
-        <mat-label>Select employee</mat-label>
-        <mat-select [value]="selectedUserId()" (selectionChange)="onUserSelect($event.value)">
-            <mat-option *ngFor="let user of users()" [value]="user.id">{{ user.name }}</mat-option>
-        </mat-select>
-    </mat-form-field>
+  <!-- Select angajat -->
+  <mat-form-field appearance="fill" class="w-full">
+    <mat-label>Select employee</mat-label>
+    <mat-select [value]="selectedUserId()" (selectionChange)="onUserSelect($event.value)">
+      <mat-option *ngFor="let user of users()" [value]="user.id">{{ user.name }}</mat-option>
+    </mat-select>
+  </mat-form-field>
 
-    <!-- Tabel pontaje -->
-    <div *ngIf="selectedUserId()">
-        <app-timesheet-table [entries]="entries()" [isAdmin]="true" (editEntry)="requestEdit($event)"
-            (deleteEntry)="validateEntry($event)">
-        </app-timesheet-table>
+  <!-- Tabel pontaje -->
+  <div *ngIf="selectedUserId()">
+    <ng-container *ngIf="entries() as userEntries">
 
-        <div *ngIf="entries().length === 0" class="text-center text-gray-500 mt-6">
-            No time entries for this user.
-        </div>
-    </div>
+      <!-- TABEL: doar când avem date -->
+      <app-timesheet-table *ngIf="userEntries.length > 0" [entries]="userEntries" [isAdmin]="true"
+        (editEntry)="onEdit($event)" (deleteEntry)="onDelete($event)" (validateEntry)="onValidate($event)"
+        (requestEditEntry)="onRequestEdit($event)">
+      </app-timesheet-table>
+
+      <!-- Mesaj fallback -->
+      <div *ngIf="userEntries.length === 0" class="text-center text-gray-500 mt-6">
+        No time entries for this user.
+      </div>
+
+    </ng-container>
+  </div>
 </div>

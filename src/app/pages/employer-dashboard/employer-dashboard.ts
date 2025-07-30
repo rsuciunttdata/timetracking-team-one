@@ -31,12 +31,12 @@ export class EmployerDashboard {
       this.users.set(users);
     })
 
-    effect(() => {
-      const userId = this.selectedUserId();
-      if (userId) {
-        this.loadEntries(userId);
-      }
-    });
+    // effect(() => {
+    //   const userId = this.selectedUserId();
+    //   if (userId) {
+    //     this.loadEntries(userId);
+    //   }
+    // });
     this.username = this.authService.username();
 
   }
@@ -45,22 +45,43 @@ export class EmployerDashboard {
 
   onUserSelect(userId: string) {
     this.selectedUserId.set(userId);
+    this.loadEntries(userId);
   }
 
   loadEntries(userId: string) {
-    this.timeEntryService.getTimeEntries({ page: 1, pageSize: 100 }, { userId }).subscribe(res => {
-      this.entries.set(res.data);
+    this.timeEntryService.getAllTimeEntries({ page: 1, pageSize: 100 }).subscribe(res => {
+      const filtered = res.data.filter(entry => entry.userId === userId);
+      this.entries.set(filtered);
     });
   }
 
-  validateEntry(entry: TimeEntry) {
-    console.log(`Validated entry ${entry.id}`);
-    // TODO: actualizare stare (ex: status: 'validated')
+  onValidate(entry: TimeEntry): void {
+    console.log('Validated entry', entry.id);
+    // TODO: trimite update către backend sau simulează schimbarea statusului
   }
 
-  requestEdit(entry: TimeEntry) {
-    console.log(`Request modification for entry ${entry.id}`);
-    // TODO: marcaj stare sau comentariu
+  onRequestEdit(entry: TimeEntry): void {
+    console.log('Request modification for entry', entry.id);
+    // TODO: trimite update către backend sau marchează cu status "needs_modification"
+  }
+
+  onEdit(entry: TimeEntry) {
+    console.log(`Editing entry ${entry.id}`);
+    // Deschide un dialog sau navighează către formularul de editare
+  }
+
+  onDelete(entry: TimeEntry) {
+    console.log(`Deleted entry ${entry.id}`);
+    this.timeEntryService.deleteTimeEntry(entry.id).subscribe({
+      next: () => {
+        console.log(`Successfully deleted entry ${entry.id}`);
+        this.loadEntries(this.selectedUserId()!);
+      },
+      error: (err) => {
+        console.error(`Error deleting entry ${entry.id}:`, err);
+        alert('Failed to delete entry. Please try again.');
+      }
+    })
   }
 
   selectedUserName(): string {
