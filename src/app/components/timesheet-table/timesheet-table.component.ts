@@ -163,16 +163,19 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   currentPageIndex = computed(() => this.pageState().pageIndex);
 
   // Summary data computed signal
-  summaryInfo = computed(() => {
+ summaryInfo = computed(() => {
     const entries = this.filteredEntries();
     const realEntries = entries.filter(entry => !this.isPlaceholderEntry(entry));
     const totalEntries = realEntries.length;
     
     const totalMinutes = realEntries.reduce((total, entry) => {
-
-      const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
-      const [hours, minutes] = workedTime.split(':').map(Number);
-      return total + (hours * 60) + minutes;
+      // Only calculate worked time if we have both start and end times
+      if (entry.startTime && entry.endTime) {
+        const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration || '00:00'); // Fix: provide default
+        const [hours, minutes] = workedTime.split(':').map(Number);
+        return total + (hours * 60) + minutes;
+      }
+      return total;
     }, 0);
 
     const totalHours = Math.floor(totalMinutes / 60);
@@ -321,27 +324,36 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   }
 
-  getStatusText(entry: TimeEntry): string {
-    // Check if it's a null/undefined entry
-    if (!entry) {
+   getStatusText(entry: TimeEntry): string {
+    if (!entry || this.isPlaceholderEntry(entry)) {
       return 'No Entry';
     }
 
-    // If any required field is missing, it's not a complete entry
-    if (!entry.startTime || !entry.endTime) {
-      return 'Pending';
-    }
-
-    const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
-    const [hours] = workedTime.split(':').map(Number);
-
-    if (hours >= 8) {
-      return 'Complete';
-    } else if (hours > 0) {
+    // If we have start time but no end time, it's in progress
+    if (entry.startTime && !entry.endTime) {
       return 'In Progress';
-    } else {
+    }
+
+    // If any required field is missing, it's pending
+    if (!entry.startTime) {
       return 'Pending';
     }
+
+    // If we have both start and end times, calculate worked time
+    if (entry.startTime && entry.endTime) {
+      const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration || '00:00'); // Fix: provide default
+      const [hours] = workedTime.split(':').map(Number);
+
+      if (hours >= 8) {
+        return 'Complete';
+      } else if (hours > 0) {
+        return 'Partial';
+      } else {
+        return 'Pending';
+      }
+    }
+
+    return 'Pending';
   }
 
   isPlaceholderEntry(entry: TimeEntry | null): boolean {

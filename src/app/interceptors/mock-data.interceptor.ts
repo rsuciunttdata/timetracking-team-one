@@ -2,7 +2,7 @@ import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
-import { TimeEntry, CreateTimeEntryRequest, UpdateTimeEntryRequest } from '../interfaces/time-entry.interface';
+import { TimeEntry, CreateTimeEntryRequest, UpdateTimeEntryRequest, CreateTimeEntryRequestWithUser } from '../interfaces/time-entry.interface';
 import { ApiResponse } from '../interfaces/api.interface';
 import { API_CONFIG } from '../config/api.config';
 import mockData from '../../assets/mock-data.json';
@@ -155,17 +155,20 @@ function handleGetTimeEntries(req: any): ApiResponse<any> {
 function handleCreateTimeEntry(req: any): ApiResponse<TimeEntry> {
   console.log('➕ CREATE time entry');
   
-  const requestData: CreateTimeEntryRequest = req.body;
+  if (!mockTimeEntries) {
+    return createErrorResponse('Mock data not initialized', 500);
+  }
+  
+  const requestData: CreateTimeEntryRequestWithUser = req.body; // Fix: Use the correct interface
   const currentUserId = localStorage.getItem('userId');
   const currentUserRole = localStorage.getItem('role');
   
-  // Validate required fields
-  if (!requestData.userId || !requestData.date || !requestData.startTime || 
-      !requestData.endTime || !requestData.breakDuration) {
-    return createErrorResponse('Missing required fields', 400);
+  // Validate required fields - only startTime is required now
+  if (!requestData.userId || !requestData.date || !requestData.startTime) {
+    return createErrorResponse('Missing required fields (userId, date, startTime)', 400);
   }
   
-  // Validate user permissions
+  // Validate user permissions - users can only create entries for themselves
   if (currentUserRole !== 'admin' && requestData.userId !== currentUserId) {
     return createErrorResponse('Access denied: You can only create entries for yourself', 403);
   }
@@ -176,8 +179,8 @@ function handleCreateTimeEntry(req: any): ApiResponse<TimeEntry> {
     userId: requestData.userId,
     date: new Date(requestData.date),
     startTime: requestData.startTime,
-    endTime: requestData.endTime,
-    breakDuration: requestData.breakDuration,
+    endTime: requestData.endTime, // Optional
+    breakDuration: requestData.breakDuration, // Optional
     createdAt: new Date(),
     updatedAt: new Date()
   };

@@ -68,9 +68,9 @@ export class AddModal implements OnInit {
     this.timeEntryForm = this.fb.group({
       date: [prefilledDate, [Validators.required]],
       startTime: [currentTime, [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
-      endTime: ['', [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
-      breakStartTime: ['', [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
-      breakEndTime: ['', [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]]
+      endTime: ['', [Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]], // Optional
+      breakStartTime: ['', [Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]], // Optional
+      breakEndTime: ['', [Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]] // Optional
     });
 
     this.timeEntryForm.get('endTime')?.addValidators(this.endTimeValidator.bind(this));
@@ -85,7 +85,7 @@ export class AddModal implements OnInit {
 
   private endTimeValidator(control: AbstractControl): ValidationErrors | null {
     if (!control.value || !this.timeEntryForm) {
-      return null;
+      return null; // End time is optional
     }
 
     const startTime = this.timeEntryForm.get('startTime')?.value;
@@ -105,7 +105,7 @@ export class AddModal implements OnInit {
 
   private breakEndTimeValidator(control: AbstractControl): ValidationErrors | null {
     if (!control.value || !this.timeEntryForm) {
-      return null;
+      return null; // Break end time is optional
     }
 
     const breakStartTime = this.timeEntryForm.get('breakStartTime')?.value;
@@ -129,22 +129,28 @@ export class AddModal implements OnInit {
 
       const formValue = this.timeEntryForm.value;
       
-      // Calculate break duration from break start and end times
-      const breakStart = this.parseTime(formValue.breakStartTime);
-      const breakEnd = this.parseTime(formValue.breakEndTime);
-      const breakDurationMinutes = breakEnd - breakStart;
-      
-      // Convert break duration back to HH:MM format
-      const breakHours = Math.floor(breakDurationMinutes / 60);
-      const breakMins = breakDurationMinutes % 60;
-      const breakDuration = `${breakHours.toString().padStart(2, '0')}:${breakMins.toString().padStart(2, '0')}`;
-      
-      const timeEntry = {
+      const timeEntry: CreateTimeEntryRequest = {
         date: formValue.date,
-        startTime: formValue.startTime,
-        endTime: formValue.endTime,
-        breakDuration: breakDuration
+        startTime: formValue.startTime
       };
+
+      // Only add optional fields if they have values
+      if (formValue.endTime) {
+        timeEntry.endTime = formValue.endTime;
+      }
+
+      // Calculate break duration only if both break times are provided
+      if (formValue.breakStartTime && formValue.breakEndTime) {
+        const breakStart = this.parseTime(formValue.breakStartTime);
+        const breakEnd = this.parseTime(formValue.breakEndTime);
+        const breakDurationMinutes = breakEnd - breakStart;
+        
+        if (breakDurationMinutes > 0) {
+          const breakHours = Math.floor(breakDurationMinutes / 60);
+          const breakMins = breakDurationMinutes % 60;
+          timeEntry.breakDuration = `${breakHours.toString().padStart(2, '0')}:${breakMins.toString().padStart(2, '0')}`;
+        }
+      }
 
       // Use the actual service to make HTTP request
       this.timeEntryService.createTimeEntry(timeEntry).subscribe({
