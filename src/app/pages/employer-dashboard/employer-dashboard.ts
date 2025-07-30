@@ -73,4 +73,30 @@ export class EmployerDashboard {
     this.router.navigate(['/login']);
   }
 
+  getTotalWorkedHours() {
+    const entries = this.entries().filter(e => e.startTime && e.endTime);
+
+    const totalMinutes = entries.reduce((sum, entry) => {
+      const [h, m] = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration).split(':').map(Number);
+      return sum + h * 60 + m;
+    }, 0);
+
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${h}:${m.toString().padStart(2, '0')}`;
+  }
+
+  calculateWorkedTime(start: string, end: string, breakDuration: string): string {
+    const parse = (t: string) => {
+      if (!t) return 0;
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    const total = parse(end) - parse(start) - parse(breakDuration);
+    const h = Math.max(0, Math.floor(total / 60));
+    const m = Math.max(0, total % 60);
+    return `${h}:${m.toString().padStart(2, '0')}`;
+  }
+
 }
