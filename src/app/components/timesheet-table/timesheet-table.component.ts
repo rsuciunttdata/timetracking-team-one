@@ -307,10 +307,19 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     }).format(new Date(date));
   }
 
-  calculateWorkedTime(startTime: string, endTime: string, breakDuration: string): string {
+   calculateWorkedTime(startTime: string, endTime?: string, breakDuration?: string): string {
+    if (!startTime || !endTime) {
+      return '00:00'; // Can't calculate without both start and end times
+    }
+
     const start = this.parseTime(startTime);
     const end = this.parseTime(endTime);
-    const breakTime = this.parseTime(breakDuration);
+    const breakTime = this.parseTime(breakDuration || '00:00');
+
+    // Validate time logic
+    if (end <= start) {
+      return '00:00'; // Invalid time range
+    }
 
     const totalMinutes = end - start - breakTime;
 
