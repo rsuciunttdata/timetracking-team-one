@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -10,12 +11,14 @@ export const routes: Routes = [
   //   redirectTo: ''
   // }
   {
-    path:'login',
-    loadComponent: () =>import('./components/login/login').then(m=>m.Login),
+    path: 'login',
+    loadComponent: () => import('./components/login/login').then(m => m.Login),
   },
 
   {
     path: 'timesheet',
+    canActivate: [authGuard],
+    data: { role: 'user' },
     loadComponent: () => import('./pages/timesheet-page.component').then(m => m.TimesheetPageComponent),
   },
   {
@@ -23,8 +26,10 @@ export const routes: Routes = [
     loadComponent: () => import('./components/coming-soon/coming-soon.component').then(m => m.ComingSoonComponent),
   },
   {
-    path:'employer-dashboard',
-    loadComponent: () =>import('./pages/employer-dashboard/employer-dashboard').then(m=>m.EmployerDashboard),
+    path: 'employer-dashboard',
+    canActivate: [authGuard],
+    data: { role: 'admin' },
+    loadComponent: () => import('./pages/employer-dashboard/employer-dashboard').then(m => m.EmployerDashboard),
 
   },
   {
