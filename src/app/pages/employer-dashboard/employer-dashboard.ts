@@ -72,7 +72,6 @@ export class EmployerDashboard {
 
   onDelete(entry: TimeEntry) {
     console.log(`Deleted entry ${entry.id}`);
-    // TODO: Apelează serviciul pentru a șterge entry-ul
     this.timeEntryService.deleteTimeEntry(entry.id).subscribe({
       next: () => {
         console.log(`Successfully deleted entry ${entry.id}`);
