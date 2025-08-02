@@ -73,36 +73,31 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     const entries = this.allEntries();
     const filter = this.dateFilterSignal();
 
-    if (!filter || (!filter.startDate && !filter.endDate)) {
-      return entries;
-    }
+    const filteredByStatus = this.isAdmin
+      ? entries.filter(entry => entry.status === 'send_for_validation')
+      : entries;
 
-    const filteredRealEntries = entries.filter(entry => {
+    const filteredByDate = filteredByStatus.filter(entry => {
       const entryDate = new Date(entry.date);
-      const start = filter.startDate;
-      const end = filter.endDate;
+      const start = filter?.startDate;
+      const end = filter?.endDate;
 
-      if (start && end) {
-        return entryDate >= start && entryDate <= end;
-      } else if (start) {
-        return entryDate >= start;
-      } else if (end) {
-        return entryDate <= end;
-      }
+      if (start && end) return entryDate >= start && entryDate <= end;
+      if (start) return entryDate >= start;
+      if (end) return entryDate <= end;
 
       return true;
     });
 
-    // Generate placeholder entries for missing dates in the range (only weekends)
-    if (filter.startDate && filter.endDate) {
+    if (!this.isAdmin && filter?.startDate && filter.endDate) {
       const allDatesInRange = this.generateDateRange(filter.startDate, filter.endDate);
-      const existingDates = new Set(filteredRealEntries.map(entry =>
+      const existingDates = new Set(filteredByDate.map(entry =>
         new Date(entry.date).toDateString()
       ));
 
       const placeholderEntries: TimeEntry[] = allDatesInRange
         .filter((date: Date) => !existingDates.has(date.toDateString()))
-        .filter((date: Date) => this.isWeekendDay(date)) // Only create placeholders for weekends
+        .filter((date: Date) => this.isWeekendDay(date))
         .map((date: Date) => ({
           id: `table-placeholder-${date.toISOString()}`,
           userId: 'table-placeholder',
@@ -115,12 +110,14 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
           status: 'placeholder'
         }));
 
-      return [...filteredRealEntries, ...placeholderEntries]
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      return [...filteredByDate, ...placeholderEntries].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
     }
 
-    return filteredRealEntries;
+    return filteredByDate;
   });
+
 
   sortedEntries = computed(() => {
     const entries = this.filteredEntries();
@@ -198,7 +195,12 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   });
 
   // Table configuration
-  displayedColumns: string[] = ['date', 'startTime', 'endTime', 'breakDuration', 'totalWorkedTime', 'status', 'actions', 'sendForApproval'];
+  // displayedColumns: string[] = ['date', 'startTime', 'endTime', 'breakDuration', 'totalWorkedTime', 'status', 'actions', 'sendForApproval'];
+  get displayedColumns(): string[] {
+    const base = ['date', 'startTime', 'endTime', 'breakDuration', 'totalWorkedTime', 'status', 'actions'];
+    return this.isAdmin ? base : [...base, 'sendForApproval'];
+  }
+
   pageSizeOptions: number[] = [5, 10, 15];
   ngOnChanges(): void {
     if (this.dateFilter) {
