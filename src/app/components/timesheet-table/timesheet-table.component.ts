@@ -111,7 +111,8 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
           endTime: '',
           breakDuration: '',
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          status: 'placeholder'
         }));
 
       return [...filteredRealEntries, ...placeholderEntries]
@@ -197,7 +198,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   });
 
   // Table configuration
-  displayedColumns: string[] = ['date', 'startTime', 'endTime', 'breakDuration', 'totalWorkedTime', 'status', 'actions'];
+  displayedColumns: string[] = ['date', 'startTime', 'endTime', 'breakDuration', 'totalWorkedTime', 'status', 'actions', 'sendForApproval'];
   pageSizeOptions: number[] = [5, 10, 15];
   ngOnChanges(): void {
     if (this.dateFilter) {
@@ -263,7 +264,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     this.addEntry.emit();
   }
 
-  
+
 
   /**
    * Export filtered entries to Excel using the ExportService
@@ -344,6 +345,11 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
       return 'No Entry';
     }
 
+    if(entry.status==='placeholder'){
+      return 'No entry!';
+
+    }
+
     // If any required field is missing, it's not a complete entry
     if (!entry.startTime || !entry.endTime) {
       return 'Pending';
@@ -402,4 +408,26 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   onRequestEditEntry(entry: TimeEntry) {
     this.requestEditEntry.emit(entry);
   }
+
+  canSendForApproval(entry: TimeEntry): boolean {
+    return entry.status === 'completed_unsent';
+  }
+
+  onSendForApproval(entry: TimeEntry): void {
+    const updatedEntry = {
+      ...entry,
+      status: 'send_for_validation'
+    };
+
+    this.timeEntryService.updateTimeEntry(updatedEntry).subscribe({
+      next: () => {
+        this.refreshData();
+        alert('Entry trimis spre aprobare.');
+      },
+      error: () => alert('Eroare la trimiterea spre aprobare.')
+    });
+  }
+
+
 }
+

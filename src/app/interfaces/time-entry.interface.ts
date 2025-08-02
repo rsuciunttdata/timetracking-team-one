@@ -2,6 +2,8 @@
  * Time Entry interfaces and types
  */
 
+export type EntryStatus = 'completed_unsent' | 'completed_partially' | 'send_for_validation' | 'approved' | 'rejected' | 'placeholder';
+
 export interface TimeEntry {
   id: string;
   userId: string;
@@ -11,6 +13,7 @@ export interface TimeEntry {
   breakDuration: string; // Format: "HH:mm"
   createdAt: Date;
   updatedAt: Date;
+  status: EntryStatus;
 }
 
 export interface CreateTimeEntryRequest {
