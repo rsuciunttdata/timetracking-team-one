@@ -212,11 +212,11 @@
                     <mat-icon class="text-yellow-600">edit_note</mat-icon>
                     <span>Send for modification</span>
                   </button>
-                  <button mat-menu-item (click)="onEditEntry(entry)">
+                  <button mat-menu-item *ngIf="!isAdmin" (click)="onEditEntry(entry)">
                     <mat-icon class="text-blue-600">edit</mat-icon>
                     <span>Edit</span>
                   </button>
-                  <button mat-menu-item (click)="onDeleteEntry(entry)">
+                  <button mat-menu-item *ngIf="!isAdmin" (click)="onDeleteEntry(entry)">
                     <mat-icon class="text-red-600">delete</mat-icon>
                     <span>Delete</span>
                   </button>
