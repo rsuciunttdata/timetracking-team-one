@@ -339,34 +339,6 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   }
 
-  getStatusText(entry: TimeEntry): string {
-    // Check if it's a null/undefined entry
-    if (!entry) {
-      return 'No Entry';
-    }
-
-    if(entry.status==='placeholder'){
-      return 'No entry!';
-
-    }
-
-    // If any required field is missing, it's not a complete entry
-    if (!entry.startTime || !entry.endTime) {
-      return 'Pending';
-    }
-
-    const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
-    const [hours] = workedTime.split(':').map(Number);
-
-    if (hours >= 8) {
-      return 'Complete';
-    } else if (hours > 0) {
-      return 'In Progress';
-    } else {
-      return 'Pending';
-    }
-  }
-
   isPlaceholderEntry(entry: TimeEntry | null): boolean {
     if (!entry) return true;
     return entry.id.startsWith('table-placeholder-') || entry.userId === 'table-placeholder';

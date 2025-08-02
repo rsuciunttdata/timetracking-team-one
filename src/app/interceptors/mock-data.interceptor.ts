@@ -181,7 +181,7 @@ function handleCreateTimeEntry(req: any): ApiResponse<TimeEntry> {
     breakDuration: requestData.breakDuration,
     createdAt: new Date(),
     updatedAt: new Date(),
-    status: 'completed_unsent'
+    status: calculateStatus(requestData.startTime, requestData.endTime, requestData.breakDuration)
   };
 
   // Add to mock data
@@ -223,7 +223,10 @@ function handleUpdateTimeEntry(req: any): ApiResponse<TimeEntry> {
     startTime: requestData.startTime || existingEntry.startTime,
     endTime: requestData.endTime || existingEntry.endTime,
     breakDuration: requestData.breakDuration || existingEntry.breakDuration,
-    updatedAt: new Date()
+    updatedAt: new Date(),
+    status: calculateStatus(
+      requestData.startTime || existingEntry.startTime, requestData.endTime || existingEntry.endTime, requestData.breakDuration || existingEntry.breakDuration
+    )
   };
 
   mockTimeEntries[entryIndex] = updatedEntry;
@@ -289,4 +292,26 @@ function createErrorResponse(message: string, statusCode: number): ApiResponse<a
       message
     }]
   };
+}
+
+function calculateStatus(startTime: string, endTime: string, breakDuration: string): EntryStatus {
+  const parse = (time: string): number => {
+    if (!time) return 0;
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  const start = parse(startTime);
+  const end = parse(endTime);
+  const breakMin = parse(breakDuration);
+
+  if (!startTime || !endTime || start >= end) {
+    return 'completed_partially';
+  }
+
+  const totalWorked = end - start - breakMin;
+
+  if (totalWorked < 0) return 'completed_partially';
+  if (totalWorked >= 8 * 60) return 'completed_unsent';
+  return 'completed_partially';
 }

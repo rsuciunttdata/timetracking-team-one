@@ -9,7 +9,7 @@
       "breakDuration": "00:30",
       "createdAt": "2025-07-09T00:00:00.000Z",
       "updatedAt": "2025-07-09T00:00:00.000Z",
-      "status": "completed_unsent"
+      "status": "completed_partially"
     },
     {
       "id": "2",
@@ -20,7 +20,7 @@
       "breakDuration": "00:45",
       "createdAt": "2025-07-09T00:00:00.000Z",
       "updatedAt": "2025-07-09T00:00:00.000Z",
-      "status": "completed_unsent"
+      "status": "send_for_validation"
     },
     {
       "id": "3",
