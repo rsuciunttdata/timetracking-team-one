@@ -52,4 +52,12 @@ Designed to manage productivity through efficient time entry management and vali
 
 ## 🌐 Live Demo
 
-> coming soon...
+> [TimeTracker](https://timetracking-team-pvwhcs4q8-tudor-atodireseis-projects.vercel.app/)
+
+**until full release use link:**
+
+- for login:
+    [TimeTracker](https://timetracking-team-pvwhcs4q8-tudor-atodireseis-projects.vercel.app/login)
+
+- if loged in:
+    [TimeTracker](https://timetracking-team-pvwhcs4q8-tudor-atodireseis-projects.vercel.app/timesheet)
