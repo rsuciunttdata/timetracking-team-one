@@ -8,7 +8,8 @@ import {
   TimeEntryResponse,
   CreateTimeEntryRequest,
   UpdateTimeEntryRequest,
-  TimeEntryFilter
+  TimeEntryFilter,
+  CreateTimeEntryRequestWithUser
 } from '../interfaces/time-entry.interface';
 import { ApiResponse, PaginationRequest } from '../interfaces/api.interface';
 import { getApiUrl } from '../config/api.config';
@@ -157,7 +158,8 @@ export class TimeEntryService {
     if (!currentUserId) {
       throw new Error('User not authenticated');
     }
-    const timeEntryWithUserAndStatus = {
+
+    const timeEntryWithUserAndStatus: CreateTimeEntryRequestWithUser = {
       ...timeEntry,
       userId: currentUserId
     };

@@ -431,13 +431,17 @@ export class ExportService {
   /**
    * Calculate worked time from start, end, and break duration
    */
-  private calculateWorkedTime(startTime: string, endTime: string, breakDuration: string): string {
+ private calculateWorkedTime(startTime: string, endTime?: string, breakDuration?: string): string {
+    if (!startTime || !endTime) {
+      return '00:00'; // Can't calculate without both start and end times
+    }
+
     const start = this.parseTime(startTime);
     const end = this.parseTime(endTime);
-    const breakTime = this.parseTime(breakDuration);
+    const breakTime = this.parseTime(breakDuration || '00:00'); // Fix: provide default
 
     const totalMinutes = end - start - breakTime;
-    
+
     if (totalMinutes < 0) {
       return '00:00';
     }
@@ -447,6 +451,7 @@ export class ExportService {
 
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   }
+
 
   /**
    * Parse time string to minutes

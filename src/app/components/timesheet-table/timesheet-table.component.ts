@@ -171,16 +171,19 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   currentPageIndex = computed(() => this.pageState().pageIndex);
 
   // Summary data computed signal
-  summaryInfo = computed(() => {
+ summaryInfo = computed(() => {
     const entries = this.filteredEntries();
     const realEntries = entries.filter(entry => !this.isPlaceholderEntry(entry));
     const totalEntries = realEntries.length;
 
     const totalMinutes = realEntries.reduce((total, entry) => {
-
-      const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
-      const [hours, minutes] = workedTime.split(':').map(Number);
-      return total + (hours * 60) + minutes;
+      // Only calculate worked time if we have both start and end times
+      if (entry.startTime && entry.endTime) {
+        const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration || '00:00'); // Fix: provide default
+        const [hours, minutes] = workedTime.split(':').map(Number);
+        return total + (hours * 60) + minutes;
+      }
+      return total;
     }, 0);
 
     const totalHours = Math.floor(totalMinutes / 60);
@@ -229,7 +232,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     this.loading.set(true);
     const pagination = { page: 1, pageSize: 100 };
 
-    this.timeEntryService.getTimeEntries(pagination).subscribe({
+    this.timeEntryService.getUserTimeEntries(pagination).subscribe({
       next: (response) => {
         this.allEntries.set(response.data);
         this.loading.set(false);
@@ -324,10 +327,19 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     }).format(new Date(date));
   }
 
-  calculateWorkedTime(startTime: string, endTime: string, breakDuration: string): string {
+   calculateWorkedTime(startTime: string, endTime?: string, breakDuration?: string): string {
+    if (!startTime || !endTime) {
+      return '00:00'; // Can't calculate without both start and end times
+    }
+
     const start = this.parseTime(startTime);
     const end = this.parseTime(endTime);
-    const breakTime = this.parseTime(breakDuration);
+    const breakTime = this.parseTime(breakDuration || '00:00');
+
+    // Validate time logic
+    if (end <= start) {
+      return '00:00'; // Invalid time range
+    }
 
     const totalMinutes = end - start - breakTime;
 
