@@ -10,7 +10,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-import { TimeEntry, UpdateTimeEntryRequest } from '../../../interfaces/time-entry.interface';
+import { TimeEntry, UpdateTimeEntryRequest, CreateTimeEntryRequest } from '../../../interfaces/time-entry.interface';
 import { TimeEntryService } from '../../../services/time-entry.service';
 
 interface EditModalData {
@@ -50,20 +50,36 @@ export class EditModal implements OnInit {
   timeEntryForm!: FormGroup;
   private formValues = signal<any>({});
   private submitting = signal(false);
-  protected formWarnings = signal<{ [key: string]: string[] }>({});
+private currentEntryId = signal<string>(this.data.timeEntry.id);
+
+protected formWarnings = signal<{ [key: string]: string[] }>({});
 
   // Computed signals
   isFormValid = computed(() => this.timeEntryForm?.valid || false);
   isSubmitting = computed(() => this.submitting());
-  hasWarnings = computed(() => {
-    const warnings = this.formWarnings();
-    return Object.values(warnings).some(warningList => warningList.length > 0);
-  });
-  
-  previewWorkedTime = computed(() => {
-    const values = this.formValues();
-    if (values.startTime && values.endTime && values.breakStartTime && values.breakEndTime) {
-      return this.calculateWorkedTime(values.startTime, values.endTime, values.breakStartTime, values.breakEndTime);
+isNewEntry = computed(() => !this.currentEntryId());
+modalTitle = computed(() => this.isNewEntry() ? 'Create Time Entry' : 'Edit Time Entry');
+isDifferentDate = computed(() => {
+  if (!this.timeEntryForm) return false;
+  const selectedDate = this.timeEntryForm.get('date')?.value;
+  const originalDate = this.data.timeEntry.date;
+  return selectedDate && !this.isSameDate(new Date(selectedDate), new Date(originalDate));
+});
+hasWarnings = computed(() => {
+  const warnings = this.formWarnings();
+  return Object.values(warnings).some(warningList => warningList.length > 0);
+});
+
+previewWorkedTime = computed(() => {
+  const values = this.formValues();
+  if (values.startTime && values.endTime && values.breakStartTime && values.breakEndTime) {
+    return this.calculateWorkedTime(values.startTime, values.endTime, values.breakStartTime, values.breakEndTime);
+  }
+  if (values.startTime && values.endTime) {
+    return this.calculateWorkedTime(values.startTime, values.endTime, values.breakDuration || '');
+  }
+  return '00:00';
+});
     }
     return '00:00';
   });
@@ -148,19 +164,22 @@ export class EditModal implements OnInit {
     
     this.timeEntryForm = this.fb.group({
       date: [entry.date, [Validators.required]],
-      startTime: [entry.startTime, [
-        Validators.required, 
-        Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-      ]],
-      endTime: [entry.endTime || '', [
-        Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-      ]],
-      breakStartTime: [breakStartTime, [
-        Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-      ]],
-      breakEndTime: [breakEndTime, [
-        Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-      ]]
+startTime: [entry.startTime, [
+  Validators.required,
+  Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+]],
+endTime: [entry.endTime || '', [
+  Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+]],
+breakDuration: [entry.breakDuration || '', [
+  Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+]],
+breakStartTime: [breakStartTime, [
+  Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+]],
+breakEndTime: [breakEndTime, [
+  Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+]]
     });
 
     // Add cross-field validators
@@ -176,8 +195,16 @@ export class EditModal implements OnInit {
       this.breakEndTimeValidator.bind(this)
     ]);
 
-    // Subscribe to form changes
+    // Watch for date changes and populate data for that date
+    this.timeEntryForm.get('date')?.valueChanges.subscribe(newDate => {
+      console.log('📅 Date changed to:', newDate);
+      if (newDate) {
+        this.loadDataForDate(new Date(newDate));
+      }
+    });
+
     this.timeEntryForm.valueChanges.subscribe(values => {
+      console.log('📝 Form values changed:', values);
       this.formValues.set(values);
       this.updateWarnings();
       this.revalidateTimeFields();
@@ -337,44 +364,161 @@ export class EditModal implements OnInit {
     return null;
   }
 
+  /**
+   * Load time entry data for a specific date
+   */
+  private loadDataForDate(selectedDate: Date): void {
+    console.log('🔄 Loading data for date:', selectedDate);
+    
+    const currentDate = new Date(this.data.timeEntry.date);
+    if (this.isSameDate(selectedDate, currentDate)) {
+      console.log('⏭️ Skipping reload - same date as current entry');
+      return;
+    }
+
+    // Format date for API query (YYYY-MM-DD)
+    const dateString = selectedDate.toISOString().split('T')[0];
+    
+    // TODO: Optimize - Add date filtering to API
+    // Instead of: getTimeEntries(pagination)
+    // Use: getTimeEntriesByDate(dateString) or getTimeEntries({date: dateString, ...pagination}) 
+    // Maybe with a new service method when Backend is implemented
+    
+    const pagination = { page: 1, pageSize: 100 };
+    
+    this.timeEntryService.getTimeEntries(pagination).subscribe({
+      next: (response) => {
+        console.log('📊 Got entries response:', response.data.length, 'entries');
+        
+        // OPTIMIZATION NEEDED: This linear search could be improved
+        // Current: O(n) - checks each entry sequentially
+        // Better: Server-side filtering by date would be O(1) ✅
+        const entryForDate = response.data.find(entry => {
+          const entryDate = new Date(entry.date);
+          const isDateMatch = this.isSameDate(entryDate, selectedDate);
+          const currentUserId = localStorage.getItem('userId');
+          const isAdmin = localStorage.getItem('role') === 'admin';
+          const isUserMatch = isAdmin || entry.userId === currentUserId;
+          return isDateMatch && isUserMatch;
+        });
+
+        if (entryForDate) {
+          console.log('✅ Found entry for date:', entryForDate);
+          this.currentEntryId.set(entryForDate.id);
+          this.populateFormWithEntry(entryForDate);
+        } else {
+          console.log('❌ No entry found for this date, creating new entry template');
+          this.currentEntryId.set('');
+          this.populateFormWithDefaults();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading entries for date:', error);
+        this.populateFormWithDefaults();
+      }
+    });
+  }
+
+  /**
+   * Check if two dates are the same (ignoring time)
+   */
+  private isSameDate(date1: Date, date2: Date): boolean {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+  }
+
+  /**
+   * Populate form with data from a specific entry
+   */
+  private populateFormWithEntry(entry: TimeEntry): void {
+    console.log('📝 Populating form with entry:', entry);
+    this.timeEntryForm.patchValue({
+      startTime: entry.startTime,
+      endTime: entry.endTime || '',
+      breakDuration: entry.breakDuration || ''
+    }, { emitEvent: false });
+    
+    this.formValues.set(this.timeEntryForm.value);
+    console.log('📝 Form updated with values:', this.timeEntryForm.value);
+  }
+
+  /**
+   * Populate form with default/empty values for a new entry
+   */
+  private populateFormWithDefaults(): void {
+    console.log('🆕 Populating form with defaults');
+    this.timeEntryForm.patchValue({
+      startTime: '',
+      endTime: '',
+      breakDuration: ''
+    }, { emitEvent: false });
+
+    this.formValues.set(this.timeEntryForm.value);
+    console.log('🆕 Form updated with default values:', this.timeEntryForm.value);
+  }
+
   onSave(): void {
     if (this.timeEntryForm.valid && !this.submitting()) {
       this.submitting.set(true);
 
       const formValue = this.timeEntryForm.value;
-      
-      const timeEntry: UpdateTimeEntryRequest = {
-        id: this.data.timeEntry.id,
-        date: new Date(formValue.date),
-        startTime: formValue.startTime
-      };
+const currentEntry = this.currentEntryId();
+const formValue = this.timeEntryForm.getRawValue();
 
-      if (formValue.endTime) {
-        timeEntry.endTime = formValue.endTime;
-      }
+const baseRequest = {
+  date: new Date(formValue.date),
+  startTime: formValue.startTime,
+  endTime: formValue.endTime || '',
+  breakDuration: formValue.breakDuration || ''
+};
 
-      if (formValue.breakStartTime && formValue.breakEndTime) {
-        const breakStart = this.parseTime(formValue.breakStartTime);
-        const breakEnd = this.parseTime(formValue.breakEndTime);
-        const breakDurationMinutes = breakEnd - breakStart;
-        
-        if (breakDurationMinutes > 0) {
-          const breakHours = Math.floor(breakDurationMinutes / 60);
-          const breakMins = breakDurationMinutes % 60;
-          timeEntry.breakDuration = `${breakHours.toString().padStart(2, '0')}:${breakMins.toString().padStart(2, '0')}`;
-        }
-      }
+// Compute breakDuration from breakStartTime and breakEndTime if available
+if (formValue.breakStartTime && formValue.breakEndTime) {
+  const breakStart = this.parseTime(formValue.breakStartTime);
+  const breakEnd = this.parseTime(formValue.breakEndTime);
+  const breakDurationMinutes = breakEnd - breakStart;
 
-      this.timeEntryService.updateTimeEntry(timeEntry).subscribe({
-        next: (updatedEntry) => {
-          this.submitting.set(false);
-          this.dialogRef.close({ action: 'update', data: updatedEntry });
-        },
-        error: (error) => {
-          console.error('Error updating time entry:', error);
-          this.submitting.set(false);
-        }
-      });
+  if (breakDurationMinutes > 0) {
+    const breakHours = Math.floor(breakDurationMinutes / 60);
+    const breakMins = breakDurationMinutes % 60;
+    baseRequest.breakDuration = `${breakHours.toString().padStart(2, '0')}:${breakMins.toString().padStart(2, '0')}`;
+  }
+}
+
+if (currentEntry) {
+  // Update existing entry
+  const updateRequest: UpdateTimeEntryRequest = {
+    id: currentEntry,
+    ...baseRequest
+  };
+
+  this.timeEntryService.updateTimeEntry(updateRequest).subscribe({
+    next: (updatedEntry) => {
+      this.submitting.set(false);
+      this.dialogRef.close({ action: 'update', data: updatedEntry });
+    },
+    error: (error) => {
+      console.error('Error updating time entry:', error);
+      this.submitting.set(false);
+    }
+  });
+} else {
+  // Create new entry
+  const createRequest = {
+    ...baseRequest
+  };
+
+  this.timeEntryService.createTimeEntry(createRequest).subscribe({
+    next: (newEntry) => {
+      this.submitting.set(false);
+      this.dialogRef.close({ action: 'create', data: newEntry });
+    },
+    error: (error) => {
+      console.error('Error creating time entry:', error);
+      this.submitting.set(false);
+    }
+  });
     }
   }
 
@@ -383,13 +527,29 @@ export class EditModal implements OnInit {
   }
 
   onDelete(): void {
+    const currentEntry = this.currentEntryId();
+    
+    if (!currentEntry) {
+      // No entry to delete for this date
+      return;
+    }
+
     if (confirm('Are you sure you want to delete this time entry?')) {
       this.submitting.set(true);
       
-      this.timeEntryService.deleteTimeEntry(this.data.timeEntry.id).subscribe({
-        next: () => {
-          this.submitting.set(false);
-          this.dialogRef.close({ action: 'delete', data: { id: this.data.timeEntry.id } });
+const currentEntry = this.currentEntryId();
+
+this.timeEntryService.deleteTimeEntry(currentEntry).subscribe({
+  next: () => {
+    this.submitting.set(false);
+    this.dialogRef.close({ action: 'delete', data: { id: currentEntry } });
+  },
+  error: (error) => {
+    console.error('Error deleting time entry:', error);
+    this.submitting.set(false);
+  }
+});
+
         },
         error: (error) => {
           console.error('Error deleting time entry:', error);
@@ -399,7 +559,12 @@ export class EditModal implements OnInit {
     }
   }
 
+
   private calculateWorkedTime(startTime: string, endTime: string, breakStartTime: string, breakEndTime: string): string {
+        // Validate input times
+    if (!startTime || !endTime) {
+      return '00:00';
+    }
     const start = this.parseTime(startTime);
     const end = this.parseTime(endTime);
     const breakStart = this.parseTime(breakStartTime);
@@ -411,8 +576,27 @@ export class EditModal implements OnInit {
       return '00:00';
     }
 
-    const totalMinutes = end - start - breakDuration;
+    // If parsing failed, return 00:00
+    if (start === 0 && startTime !== '00:00') {
+      return '00:00';
+    }
+    if (end === 0 && endTime !== '00:00') {
+      return '00:00';
+    }
+    /*
+    * DEPRECATED: Overnight work is no longer an option.
+    */
+    // Handle overnight work (end time is next day)
+    let totalMinutes: number;
+    if (end < start) {
+      // Overnight shift: add 24 hours to end time
+      totalMinutes = (end + 24 * 60) - start - breakTime;
+    } else {
+      // Same day shift
+      totalMinutes = end - start - breakTime;
+    }
     
+    // Ensure we don't have negative time
     if (totalMinutes < 0) {
       return '00:00';
     }
@@ -424,10 +608,19 @@ export class EditModal implements OnInit {
   }
 
   private parseTime(timeString: string): number {
-    if (!timeString || !timeString.includes(':')) return 0;
+    // Handle empty or undefined strings
+    if (!timeString || timeString.trim() === '') return 0;
     
-    const [hours, minutes] = timeString.split(':').map(Number);
+    // Handle strings that don't contain ':'
+    if (!timeString.includes(':')) return 0;
     
+    const parts = timeString.split(':');
+    if (parts.length !== 2) return 0;
+    
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    
+    // Validate parsed numbers
     if (isNaN(hours) || isNaN(minutes)) return 0;
     if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return 0;
     
