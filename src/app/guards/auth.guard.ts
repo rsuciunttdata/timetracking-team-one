@@ -10,8 +10,16 @@ export const authGuard: CanActivateFn = (route, state) => {
     }
 
     const expectedRole = route.data['role'];
-    if (expectedRole && role !== expectedRole) {
-        return redirectToLogin('/');
+    if (expectedRole) {
+        if (Array.isArray(expectedRole)) {
+            if (!expectedRole.includes(role)) {
+                return redirectToLogin('/');
+            }
+        } else {
+            if (role !== expectedRole) {
+                return redirectToLogin('/');
+            }
+        }
     }
 
     return true;

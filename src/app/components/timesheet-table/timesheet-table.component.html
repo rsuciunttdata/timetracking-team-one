@@ -235,8 +235,7 @@
             </th>
             <td mat-cell *matCellDef="let entry" class="py-3 text-center">
               @if (entry && !isPlaceholderEntry(entry) && canSendForApproval(entry)) {
-              <button mat-stroked-button color="primary" class="text-xs px-3 py-1"
-                *ngIf="entry&&canSendForApproval(entry)" (click)="onSendForApproval(entry)">
+              <button mat-stroked-button color="primary" class="text-xs px-3 py-1" (click)="onSendForApproval(entry)">
                 Send
               </button>
               }
