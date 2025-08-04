@@ -1,10 +1,10 @@
 <div class="modal-container">
   <div class="modal-header">
     <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
-      <mat-icon class="text-blue-600">add_circle</mat-icon>
+      <mat-icon class="text-blue-600">add</mat-icon>
       Add Time Entry
     </h2>
-    <button mat-icon-button (click)="onCancel()" class="text-gray-400 hover:text-gray-600">
+    <button mat-icon-button (click)="onCancel()" class="text-gray-400 hover:text-gray-600 close-button">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -12,7 +12,7 @@
   <form [formGroup]="timeEntryForm" class="modal-form">
     <div class="form-grid">
       <!-- Date Field -->
-      <mat-form-field appearance="outline" class="form-field">
+      <mat-form-field appearance="outline" class="form-field full-width">
         <mat-label>Date</mat-label>
         <input matInput 
                [matDatepicker]="picker" 
@@ -32,11 +32,8 @@
                type="time"
                formControlName="startTime"
                placeholder="09:00">
-        @if (timeEntryForm.get('startTime')?.hasError('required')) {
-          <mat-error>Start time is required</mat-error>
-        }
-        @if (timeEntryForm.get('startTime')?.hasError('pattern')) {
-          <mat-error>Please enter a valid time format (HH:MM)</mat-error>
+        @for (error of startTimeValidation.errors; track error) {
+          <mat-error>{{ error }}</mat-error>
         }
       </mat-form-field>
 
@@ -47,32 +44,76 @@
                type="time"
                formControlName="endTime"
                placeholder="17:00">
-        @if (timeEntryForm.get('endTime')?.hasError('required')) {
-          <mat-error>End time is required</mat-error>
+        @for (error of endTimeValidation.errors; track error) {
+          <mat-error>{{ error }}</mat-error>
         }
-        @if (timeEntryForm.get('endTime')?.hasError('pattern')) {
-          <mat-error>Please enter a valid time format (HH:MM)</mat-error>
-        }
-        @if (timeEntryForm.get('endTime')?.hasError('endTimeBeforeStart')) {
-          <mat-error>End time must be after start time</mat-error>
+        @for (warning of endTimeValidation.warnings; track warning) {
+          <mat-hint class="warning-hint">
+            <mat-icon class="warning-icon">warning</mat-icon>
+            {{ warning }}
+          </mat-hint>
         }
       </mat-form-field>
 
-      <!-- Break Duration Field -->
+      <!-- Break Start Time Field -->
       <mat-form-field appearance="outline" class="form-field">
-        <mat-label>Break Duration</mat-label>
+        <mat-label>Break Start Time</mat-label>
         <input matInput 
                type="time"
-               formControlName="breakDuration"
-               placeholder="01:00">
-        @if (timeEntryForm.get('breakDuration')?.hasError('required')) {
-          <mat-error>Break duration is required</mat-error>
+               formControlName="breakStartTime"
+               placeholder="12:00">
+        @for (error of breakStartTimeValidation.errors; track error) {
+          <mat-error>{{ error }}</mat-error>
         }
-        @if (timeEntryForm.get('breakDuration')?.hasError('pattern')) {
-          <mat-error>Please enter a valid time format (HH:MM)</mat-error>
+        @for (warning of breakStartTimeValidation.warnings; track warning) {
+          <mat-hint class="warning-hint">
+            <mat-icon class="warning-icon">warning</mat-icon>
+            {{ warning }}
+          </mat-hint>
+        }
+      </mat-form-field>
+
+      <!-- Break End Time Field -->
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Break End Time</mat-label>
+        <input matInput 
+               type="time"
+               formControlName="breakEndTime"
+               placeholder="12:30">
+        @for (error of breakEndTimeValidation.errors; track error) {
+          <mat-error>{{ error }}</mat-error>
+        }
+        @for (warning of breakEndTimeValidation.warnings; track warning) {
+          <mat-hint class="warning-hint">
+            <mat-icon class="warning-icon">warning</mat-icon>
+            {{ warning }}
+          </mat-hint>
         }
       </mat-form-field>
     </div>
+
+    <!-- Global Warnings Section -->
+    @if (hasWarnings()) {
+      <div class="warnings-section">
+        <div class="warning-card">
+          <div class="warning-header">
+            <mat-icon class="text-orange-600">warning</mat-icon>
+            <span class="font-medium text-orange-800">Warnings</span>
+          </div>
+          <div class="warning-list">
+            @for (warning of formWarnings()['workDuration']; track warning) {
+              <div class="warning-item">{{ warning }}</div>
+            }
+            @for (warning of formWarnings()['breakDuration']; track warning) {
+              <div class="warning-item">{{ warning }}</div>
+            }
+          </div>
+          <div class="warning-note">
+            You can still save this entry, but please review the times.
+          </div>
+        </div>
+      </div>
+    }
 
     <!-- Preview Section -->
     <div class="preview-section">
@@ -99,9 +140,10 @@
               color="primary"
               type="button"
               (click)="onSave()"
+              [disabled]="!isFormValid() || isSubmitting()"
               class="save-button">
         @if (isSubmitting()) {
-          <mat-spinner diameter="16" style="color: white;"></mat-spinner>
+          <mat-spinner diameter="16"></mat-spinner>
         } @else {
           <mat-icon>save</mat-icon>
         }

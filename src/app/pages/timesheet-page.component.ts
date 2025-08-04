@@ -15,7 +15,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { TimesheetTableComponent } from '../components/timesheet-table/timesheet-table.component';
 import { AddModal } from '../components/modal/add-modal/add-modal';
 import { EditModal } from '../components/modal/edit-modal/edit-modal';
-import { TimeEntryService } from '../services/time-entry.service';
+import { TimeEntryService } from '../../app/services/time-entry.service';
 import { TimeEntry } from '../interfaces/time-entry.interface';
 
 import { AuthService } from '../services/auth.service';
@@ -37,8 +37,8 @@ import { Router } from '@angular/router';
     MatNativeDateModule,
     MatSnackBarModule,
     MatDialogModule,
-    TimesheetTableComponent,
-  ],
+    TimesheetTableComponent
+],
   templateUrl: './timesheet-page.component.html',
   styleUrls: ['./timesheet-page.component.css']
 })
@@ -62,7 +62,7 @@ export class TimesheetPageComponent implements OnInit {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-    
+
     return this.calculateSummaryForDateRange(startOfDay, endOfDay);
   });
 
@@ -71,11 +71,11 @@ export class TimesheetPageComponent implements OnInit {
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
     startOfWeek.setHours(0, 0, 0, 0); // Start of day
-    
+
     const endOfWeek = new Date(today);
     endOfWeek.setDate(today.getDate() + (6 - today.getDay())); // End of current week (Saturday)
     endOfWeek.setHours(23, 59, 59, 999); // End of day
-    
+
     return this.calculateSummaryForDateRange(startOfWeek, endOfWeek);
   });
 
@@ -103,7 +103,7 @@ export class TimesheetPageComponent implements OnInit {
   }
 
   get username(): string | null {
-    return this.authService.getUsername();
+    return this.authService.username();
   }
 
   ngOnInit(): void {
@@ -113,8 +113,8 @@ export class TimesheetPageComponent implements OnInit {
 
   private loadTimeEntries(): void {
     const pagination = { page: 1, pageSize: 100 };
-    
-    this.timeEntryService.getTimeEntries(pagination).subscribe({
+
+    this.timeEntryService.getUserTimeEntries(pagination).subscribe({
       next: (response) => {
         this.allTimeEntriesSignal.set(response.data);
       },
@@ -128,18 +128,20 @@ export class TimesheetPageComponent implements OnInit {
     const today = new Date();
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
-    
+
     this.startDateSignal.set(startOfWeek);
     this.endDateSignal.set(today);
   }
 
   onDateRangeChange(): void {
     console.log('Date range changed:', this.dateFilter());
+    this.refreshAllData();
   }
 
   clearDateFilters(): void {
     this.startDateSignal.set(null);
     this.endDateSignal.set(null);
+    this.refreshAllData();
   }
 
   // Quick filter methods
@@ -148,9 +150,10 @@ export class TimesheetPageComponent implements OnInit {
     // Normalize to start and end of day to ensure proper comparison
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-    
+
     this.startDateSignal.set(startOfDay);
     this.endDateSignal.set(endOfDay);
+    this.refreshAllData();
   }
 
   setThisWeekFilter(): void {
@@ -158,25 +161,27 @@ export class TimesheetPageComponent implements OnInit {
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
     startOfWeek.setHours(0, 0, 0, 0); // Start of day
-    
+
     const endOfWeek = new Date(today);
     endOfWeek.setDate(today.getDate() + (6 - today.getDay())); // End of current week (Saturday)
     endOfWeek.setHours(23, 59, 59, 999); // End of day
-    
+
     this.startDateSignal.set(startOfWeek);
     this.endDateSignal.set(endOfWeek);
+    this.refreshAllData();
   }
 
   setThisMonthFilter(): void {
     const today = new Date();
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     startOfMonth.setHours(0, 0, 0, 0); // Start of day
-    
+
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     endOfMonth.setHours(23, 59, 59, 999); // End of day
-    
+
     this.startDateSignal.set(startOfMonth);
     this.endDateSignal.set(endOfMonth);
+    this.refreshAllData();
   }
 
   setLast30DaysFilter(): void {
@@ -184,73 +189,68 @@ export class TimesheetPageComponent implements OnInit {
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(today.getDate() - 30);
     thirtyDaysAgo.setHours(0, 0, 0, 0); // Start of day
-    
+
     const endOfToday = new Date(today);
     endOfToday.setHours(23, 59, 59, 999); // End of day
-    
+
     this.startDateSignal.set(thirtyDaysAgo);
     this.endDateSignal.set(endOfToday);
+    this.refreshAllData();
   }
 
   // Helper method to check if a quick filter is active
   isQuickFilterActive(filterType: 'today' | 'thisWeek' | 'thisMonth' | 'last30Days'): boolean {
     const currentStart = this.startDateSignal();
     const currentEnd = this.endDateSignal();
-    
+
     if (!currentStart || !currentEnd) return false;
-    
+
     const today = new Date();
-    
+
     switch (filterType) {
       case 'today': {
         const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-        
+
         return this.isSameDateTime(currentStart, startOfDay) && this.isSameDateTime(currentEnd, endOfDay);
       }
-        
+
       case 'thisWeek': {
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay());
         startOfWeek.setHours(0, 0, 0, 0);
-        
+
         const endOfWeek = new Date(today);
         endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
         endOfWeek.setHours(23, 59, 59, 999);
-        
+
         return this.isSameDateTime(currentStart, startOfWeek) && this.isSameDateTime(currentEnd, endOfWeek);
       }
-      
+
       case 'thisMonth': {
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         startOfMonth.setHours(0, 0, 0, 0);
-        
+
         const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
         endOfMonth.setHours(23, 59, 59, 999);
-        
+
         return this.isSameDateTime(currentStart, startOfMonth) && this.isSameDateTime(currentEnd, endOfMonth);
       }
-      
+
       case 'last30Days': {
         const thirtyDaysAgo = new Date(today);
         thirtyDaysAgo.setDate(today.getDate() - 30);
         thirtyDaysAgo.setHours(0, 0, 0, 0);
-        
+
         const endOfToday = new Date(today);
         endOfToday.setHours(23, 59, 59, 999);
-        
+
         return this.isSameDateTime(currentStart, thirtyDaysAgo) && this.isSameDateTime(currentEnd, endOfToday);
       }
-      
+
       default:
         return false;
     }
-  }
-
-  private isSameDay(date1: Date, date2: Date): boolean {
-    return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate();
   }
 
   private isSameDateTime(date1: Date, date2: Date): boolean {
@@ -259,30 +259,30 @@ export class TimesheetPageComponent implements OnInit {
 
   private calculateSummaryForDateRange(startDate: Date, endDate: Date): { entries: number; hours: string } {
     const allEntries = this.allTimeEntriesSignal();
-    
+
     // Normalize the date range for comparison (ignore time components)
     const normalizedStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
     const normalizedEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999);
-    
+
     const filteredEntries = allEntries.filter(entry => {
       const entryDate = new Date(entry.date);
       const normalizedEntryDate = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate());
-      
+
       return normalizedEntryDate >= normalizedStart && normalizedEntryDate <= normalizedEnd;
     });
 
     const totalMinutes = filteredEntries.reduce((total, entry) => {
       if (!entry.startTime || !entry.endTime) return total;
-      
+
       const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration || '0:00');
       const [hours, minutes] = workedTime.split(':').map(Number);
       return total + (hours * 60) + minutes;
     }, 0);
-    
+
     const totalHours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
     const hoursFormatted = `${totalHours}:${remainingMinutes.toString().padStart(2, '0')}`;
-    
+
     return {
       entries: filteredEntries.length,
       hours: hoursFormatted
@@ -295,7 +295,7 @@ export class TimesheetPageComponent implements OnInit {
     const breakTime = this.parseTime(breakDuration);
 
     const totalMinutes = end - start - breakTime;
-    
+
     if (totalMinutes < 0) {
       return '0:00';
     }
@@ -314,8 +314,9 @@ export class TimesheetPageComponent implements OnInit {
 
   onEditEntry(entry: TimeEntry): void {
     const dialogRef = this.dialog.open(EditModal, {
-      width: '500px',
-      maxWidth: '90vw',
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      panelClass: 'responsive-dialog',
       data: { timeEntry: entry },
       disableClose: true
     });
@@ -350,11 +351,11 @@ export class TimesheetPageComponent implements OnInit {
 
   onAddNewEntry(): void {
     const dialogRef = this.dialog.open(AddModal, {
-      width: '500px',
-      maxWidth: '90vw',
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      panelClass: 'responsive-dialog',
       data: { 
-        prefilledDate: new Date(),
-        userId: 'current-user' // This should come from auth service
+        prefilledDate: new Date()
       },
       disableClose: true
     });
@@ -369,11 +370,11 @@ export class TimesheetPageComponent implements OnInit {
 
   onAddEntryForDate(date: Date): void {
     const dialogRef = this.dialog.open(AddModal, {
-      width: '500px',
-      maxWidth: '90vw',
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      panelClass: 'responsive-dialog',
       data: { 
-        prefilledDate: date,
-        userId: 'current-user' // This should come from auth service
+        prefilledDate: date
       },
       disableClose: true
     });
@@ -394,9 +395,8 @@ export class TimesheetPageComponent implements OnInit {
   // Method to refresh all data
   refreshAllData(): void {
     this.loadTimeEntries();
-    if (this.timesheetTable) {
-      this.timesheetTable.refreshData();
-    }
+    // The table will automatically refresh when dateFilter changes through ngOnChanges
+    // No need to manually call timesheetTable.refreshData()
   }
 
   // Expose summary data for template
