@@ -73,36 +73,31 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     const entries = this.allEntries();
     const filter = this.dateFilterSignal();
 
-    if (!filter || (!filter.startDate && !filter.endDate)) {
-      return entries;
-    }
+    const filteredByStatus = this.isAdmin
+      ? entries.filter(entry => entry.status === 'send_for_validation')
+      : entries;
 
-    const filteredRealEntries = entries.filter(entry => {
+    const filteredByDate = filteredByStatus.filter(entry => {
       const entryDate = new Date(entry.date);
-      const start = filter.startDate;
-      const end = filter.endDate;
+      const start = filter?.startDate;
+      const end = filter?.endDate;
 
-      if (start && end) {
-        return entryDate >= start && entryDate <= end;
-      } else if (start) {
-        return entryDate >= start;
-      } else if (end) {
-        return entryDate <= end;
-      }
+      if (start && end) return entryDate >= start && entryDate <= end;
+      if (start) return entryDate >= start;
+      if (end) return entryDate <= end;
 
       return true;
     });
 
-    // Generate placeholder entries for missing dates in the range (only weekends)
-    if (filter.startDate && filter.endDate) {
+    if (!this.isAdmin && filter?.startDate && filter.endDate) {
       const allDatesInRange = this.generateDateRange(filter.startDate, filter.endDate);
-      const existingDates = new Set(filteredRealEntries.map(entry =>
+      const existingDates = new Set(filteredByDate.map(entry =>
         new Date(entry.date).toDateString()
       ));
 
       const placeholderEntries: TimeEntry[] = allDatesInRange
         .filter((date: Date) => !existingDates.has(date.toDateString()))
-        .filter((date: Date) => this.isWeekendDay(date)) // Only create placeholders for weekends
+        .filter((date: Date) => this.isWeekendDay(date))
         .map((date: Date) => ({
           id: `table-placeholder-${date.toISOString()}`,
           userId: 'table-placeholder',
@@ -111,15 +106,18 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
           endTime: '',
           breakDuration: '',
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          status: 'placeholder'
         }));
 
-      return [...filteredRealEntries, ...placeholderEntries]
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      return [...filteredByDate, ...placeholderEntries].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
     }
 
-    return filteredRealEntries;
+    return filteredByDate;
   });
+
 
   sortedEntries = computed(() => {
     const entries = this.filteredEntries();
@@ -173,16 +171,19 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   currentPageIndex = computed(() => this.pageState().pageIndex);
 
   // Summary data computed signal
-  summaryInfo = computed(() => {
+ summaryInfo = computed(() => {
     const entries = this.filteredEntries();
     const realEntries = entries.filter(entry => !this.isPlaceholderEntry(entry));
     const totalEntries = realEntries.length;
 
     const totalMinutes = realEntries.reduce((total, entry) => {
-
-      const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
-      const [hours, minutes] = workedTime.split(':').map(Number);
-      return total + (hours * 60) + minutes;
+      // Only calculate worked time if we have both start and end times
+      if (entry.startTime && entry.endTime) {
+        const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration || '00:00'); // Fix: provide default
+        const [hours, minutes] = workedTime.split(':').map(Number);
+        return total + (hours * 60) + minutes;
+      }
+      return total;
     }, 0);
 
     const totalHours = Math.floor(totalMinutes / 60);
@@ -197,7 +198,12 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   });
 
   // Table configuration
-  displayedColumns: string[] = ['date', 'startTime', 'endTime', 'breakDuration', 'totalWorkedTime', 'status', 'actions'];
+  // displayedColumns: string[] = ['date', 'startTime', 'endTime', 'breakDuration', 'totalWorkedTime', 'status', 'actions', 'sendForApproval'];
+  get displayedColumns(): string[] {
+    const base = ['date', 'startTime', 'endTime', 'breakDuration', 'totalWorkedTime', 'status', 'actions'];
+    return this.isAdmin ? base : [...base, 'sendForApproval'];
+  }
+
   pageSizeOptions: number[] = [5, 10, 15];
   ngOnChanges(): void {
     if (this.dateFilter) {
@@ -226,7 +232,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     this.loading.set(true);
     const pagination = { page: 1, pageSize: 100 };
 
-    this.timeEntryService.getTimeEntries(pagination).subscribe({
+    this.timeEntryService.getUserTimeEntries(pagination).subscribe({
       next: (response) => {
         this.allEntries.set(response.data);
         this.loading.set(false);
@@ -263,7 +269,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     this.addEntry.emit();
   }
 
-  
+
 
   /**
    * Export filtered entries to Excel using the ExportService
@@ -321,10 +327,19 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     }).format(new Date(date));
   }
 
-  calculateWorkedTime(startTime: string, endTime: string, breakDuration: string): string {
+   calculateWorkedTime(startTime: string, endTime?: string, breakDuration?: string): string {
+    if (!startTime || !endTime) {
+      return '00:00'; // Can't calculate without both start and end times
+    }
+
     const start = this.parseTime(startTime);
     const end = this.parseTime(endTime);
-    const breakTime = this.parseTime(breakDuration);
+    const breakTime = this.parseTime(breakDuration || '00:00');
+
+    // Validate time logic
+    if (end <= start) {
+      return '00:00'; // Invalid time range
+    }
 
     const totalMinutes = end - start - breakTime;
 
@@ -336,29 +351,6 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     const minutes = totalMinutes % 60;
 
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  }
-
-  getStatusText(entry: TimeEntry): string {
-    // Check if it's a null/undefined entry
-    if (!entry) {
-      return 'No Entry';
-    }
-
-    // If any required field is missing, it's not a complete entry
-    if (!entry.startTime || !entry.endTime) {
-      return 'Pending';
-    }
-
-    const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
-    const [hours] = workedTime.split(':').map(Number);
-
-    if (hours >= 8) {
-      return 'Complete';
-    } else if (hours > 0) {
-      return 'In Progress';
-    } else {
-      return 'Pending';
-    }
   }
 
   isPlaceholderEntry(entry: TimeEntry | null): boolean {
@@ -402,4 +394,26 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   onRequestEditEntry(entry: TimeEntry) {
     this.requestEditEntry.emit(entry);
   }
+
+  canSendForApproval(entry: TimeEntry): boolean {
+    return entry.status === 'completed_unsent';
+  }
+
+  onSendForApproval(entry: TimeEntry): void {
+    const updatedEntry = {
+      ...entry,
+      status: 'send_for_validation'
+    };
+
+    this.timeEntryService.updateTimeEntry(updatedEntry).subscribe({
+      next: () => {
+        this.refreshData();
+        alert('Entry trimis spre aprobare.');
+      },
+      error: () => alert('Eroare la trimiterea spre aprobare.')
+    });
+  }
+
+
 }
+

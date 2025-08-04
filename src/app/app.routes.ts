@@ -18,7 +18,7 @@ export const routes: Routes = [
   {
     path: 'timesheet',
     canActivate: [authGuard],
-    data: { role: 'user' },
+    data: { role: ['user', 'admin'] },
     loadComponent: () => import('./pages/timesheet-page.component').then(m => m.TimesheetPageComponent),
   },
   {
