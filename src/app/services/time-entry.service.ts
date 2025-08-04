@@ -153,20 +153,18 @@ export class TimeEntryService {
    * Create a new time entry (automatically assigns to current user)
    */
   createTimeEntry(timeEntry: Omit<CreateTimeEntryRequest, 'userId'>): Observable<TimeEntry> {
-
-    if (!this.getCurrentUserId()) {
+    const currentUserId = this.getCurrentUserId();
+    if (!currentUserId) {
       throw new Error('User not authenticated');
     }
-
-    const timeEntryWithUser: CreateTimeEntryRequest = {
+    const timeEntryWithUserAndStatus = {
       ...timeEntry,
-      userId: this.getCurrentUserId() || 'current-user' // Fallback for legacy support
+      userId: currentUserId
     };
 
-    return this.http.post<ApiResponse<TimeEntry>>(this.baseUrl, timeEntryWithUser)
-      .pipe(
-        map(response => response.data)
-      );
+    return this.http.post<ApiResponse<TimeEntry>>(this.baseUrl, timeEntryWithUserAndStatus).pipe(
+      map(response => response.data)
+    );
   }
 
   /**
