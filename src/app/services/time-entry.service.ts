@@ -3,10 +3,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
-import { 
-  TimeEntry, 
-  TimeEntryResponse, 
-  CreateTimeEntryRequest, 
+import {
+  TimeEntry,
+  TimeEntryResponse,
+  CreateTimeEntryRequest,
   UpdateTimeEntryRequest,
   TimeEntryFilter,
   CreateTimeEntryRequestWithUser
@@ -20,13 +20,13 @@ import { getApiUrl } from '../config/api.config';
 export class TimeEntryService {
   private readonly baseUrl = getApiUrl('TIME_ENTRIES');
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Get time entries for the current logged-in user only (optimized for regular users)
    */
   getUserTimeEntries(
-    pagination: PaginationRequest, 
+    pagination: PaginationRequest,
     filter?: Omit<TimeEntryFilter, 'userId'>
   ): Observable<TimeEntryResponse> {
     if (!this.getCurrentUserId()) {
@@ -65,7 +65,7 @@ export class TimeEntryService {
    * Get all time entries with optional user filtering (for admin/employer use)
    */
   getAllTimeEntries(
-    pagination: PaginationRequest, 
+    pagination: PaginationRequest,
     filter?: TimeEntryFilter
   ): Observable<TimeEntryResponse> {
     if (!this.isAdmin()) {
@@ -107,7 +107,7 @@ export class TimeEntryService {
    * @deprecated Use getUserTimeEntries() for regular users or getAllTimeEntries() for admin users
    */
   getTimeEntries(
-    pagination: PaginationRequest, 
+    pagination: PaginationRequest,
     filter?: TimeEntryFilter
   ): Observable<TimeEntryResponse> {
     let params = new HttpParams()
@@ -154,20 +154,19 @@ export class TimeEntryService {
    * Create a new time entry (automatically assigns to current user)
    */
   createTimeEntry(timeEntry: Omit<CreateTimeEntryRequest, 'userId'>): Observable<TimeEntry> {
-    
-    if (!this.getCurrentUserId()) {
+    const currentUserId = this.getCurrentUserId();
+    if (!currentUserId) {
       throw new Error('User not authenticated');
     }
 
-    const timeEntryWithUser: CreateTimeEntryRequestWithUser = {
+    const timeEntryWithUserAndStatus: CreateTimeEntryRequestWithUser = {
       ...timeEntry,
-      userId: this.getCurrentUserId() || 'current-user' // Fallback for legacy support
+      userId: currentUserId
     };
 
-    return this.http.post<ApiResponse<TimeEntry>>(this.baseUrl, timeEntryWithUser)
-      .pipe(
-        map(response => response.data)
-      );
+    return this.http.post<ApiResponse<TimeEntry>>(this.baseUrl, timeEntryWithUserAndStatus).pipe(
+      map(response => response.data)
+    );
   }
 
   /**
@@ -188,11 +187,16 @@ export class TimeEntryService {
    * Update an existing time entry (with ownership validation)
    */
   updateTimeEntry(timeEntry: UpdateTimeEntryRequest): Observable<TimeEntry> {
-    // First get the entry to validate ownership
+    if (!timeEntry?.id) {
+      throw new Error('Invalid time entry: missing ID');
+    }
+
     return this.getTimeEntry(timeEntry.id).pipe(
-      switchMap((existingEntry: TimeEntry) => {
-        
-        // Allow admin to update any entry, or user to update their own entry
+      switchMap((existingEntry: TimeEntry | null) => {
+        if (!existingEntry) {
+          throw new Error('Time entry not found');
+        }
+
         if (!this.isAdmin() && existingEntry.userId !== this.getCurrentUserId()) {
           throw new Error('Access denied: You can only update your own time entries');
         }
@@ -212,7 +216,7 @@ export class TimeEntryService {
     // First get the entry to validate ownership
     return this.getTimeEntry(id).pipe(
       switchMap((existingEntry: TimeEntry) => {
-        
+
         // Allow admin to delete any entry, or user to delete their own entry
         if (!this.isAdmin() && existingEntry.userId !== this.getCurrentUserId()) {
           throw new Error('Access denied: You can only delete your own time entries');
