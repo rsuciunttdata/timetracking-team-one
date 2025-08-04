@@ -20,6 +20,18 @@
   box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2) !important;
 }
 
+/* Info Banner Styles */
+.info-banner {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.info-banner mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
 /* Preview card with orange accent */
 .preview-card {
   border-color: rgba(234, 88, 12, 0.2) !important;
