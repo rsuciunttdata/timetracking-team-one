@@ -2,7 +2,7 @@ import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
-import { TimeEntry, CreateTimeEntryRequest, UpdateTimeEntryRequest, CreateTimeEntryRequestWithUser } from '../interfaces/time-entry.interface';
+import { TimeEntry, CreateTimeEntryRequest, UpdateTimeEntryRequest, CreateTimeEntryRequestWithUser, EntryStatus } from '../interfaces/time-entry.interface';
 
 import { ApiResponse } from '../interfaces/api.interface';
 import { API_CONFIG } from '../config/api.config';
@@ -185,7 +185,7 @@ function handleCreateTimeEntry(req: any): ApiResponse<TimeEntry> {
     breakDuration: requestData.breakDuration, // Optional
     createdAt: new Date(),
     updatedAt: new Date(),
-    status: calculateStatus(requestData.startTime, requestData.endTime, requestData.breakDuration)
+    status: calculateStatus(requestData.startTime, requestData.endTime || '', requestData.breakDuration || '')
   };
 
   // Add to mock data
@@ -229,7 +229,9 @@ function handleUpdateTimeEntry(req: any): ApiResponse<TimeEntry> {
     breakDuration: requestData.breakDuration || existingEntry.breakDuration,
     updatedAt: new Date(),
     status: calculateStatus(
-      requestData.startTime || existingEntry.startTime, requestData.endTime || existingEntry.endTime, requestData.breakDuration || existingEntry.breakDuration
+      requestData.startTime || existingEntry.startTime, 
+      requestData.endTime || existingEntry.endTime || '', 
+      requestData.breakDuration || existingEntry.breakDuration || ''
     )
   };
 

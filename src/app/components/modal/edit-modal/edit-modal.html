@@ -35,9 +35,10 @@
         <input matInput 
                [matDatepicker]="picker" 
                formControlName="date"
-               readonly>
-        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker></mat-datepicker>
+               readonly
+               [disabled]="true">
+        <mat-datepicker-toggle matIconSuffix [for]="picker" [disabled]="true"></mat-datepicker-toggle>
+        <mat-datepicker #picker [disabled]="true"></mat-datepicker>
         @if (timeEntryForm.get('date')?.hasError('required')) {
           <mat-error>Date is required</mat-error>
         }

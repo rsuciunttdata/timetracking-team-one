@@ -80,9 +80,7 @@ previewWorkedTime = computed(() => {
   }
   return '00:00';
 });
-    }
-    return '00:00';
-  });
+
 
   // Validation getters for template
   get startTimeValidation(): FieldValidation {
@@ -462,63 +460,63 @@ breakEndTime: [breakEndTime, [
     if (this.timeEntryForm.valid && !this.submitting()) {
       this.submitting.set(true);
 
-      const formValue = this.timeEntryForm.value;
-const currentEntry = this.currentEntryId();
-const formValue = this.timeEntryForm.getRawValue();
+      const currentEntry = this.currentEntryId();
+      const formValue = this.timeEntryForm.getRawValue();
 
-const baseRequest = {
-  date: new Date(formValue.date),
-  startTime: formValue.startTime,
-  endTime: formValue.endTime || '',
-  breakDuration: formValue.breakDuration || ''
-};
+      const baseRequest = {
+        date: new Date(formValue.date),
+        startTime: formValue.startTime,
+        endTime: formValue.endTime || '',
+        breakDuration: formValue.breakDuration || ''
+      };
 
-// Compute breakDuration from breakStartTime and breakEndTime if available
-if (formValue.breakStartTime && formValue.breakEndTime) {
-  const breakStart = this.parseTime(formValue.breakStartTime);
-  const breakEnd = this.parseTime(formValue.breakEndTime);
-  const breakDurationMinutes = breakEnd - breakStart;
+      // Compute breakDuration from breakStartTime and breakEndTime if available
+      if (formValue.breakStartTime && formValue.breakEndTime) {
+        const breakStart = this.parseTime(formValue.breakStartTime);
+        const breakEnd = this.parseTime(formValue.breakEndTime);
+        const breakDurationMinutes = breakEnd - breakStart;
 
-  if (breakDurationMinutes > 0) {
-    const breakHours = Math.floor(breakDurationMinutes / 60);
-    const breakMins = breakDurationMinutes % 60;
-    baseRequest.breakDuration = `${breakHours.toString().padStart(2, '0')}:${breakMins.toString().padStart(2, '0')}`;
-  }
-}
+        if (breakDurationMinutes > 0) {
+          const breakHours = Math.floor(breakDurationMinutes / 60);
+          const breakMins = breakDurationMinutes % 60;
+          baseRequest.breakDuration = `${breakHours.toString().padStart(2, '0')}:${breakMins.toString().padStart(2, '0')}`;
+        }
+      }
 
-if (currentEntry) {
-  // Update existing entry
-  const updateRequest: UpdateTimeEntryRequest = {
-    id: currentEntry,
-    ...baseRequest
-  };
+      if (currentEntry) {
+        // Update existing entry
+        const updateRequest: UpdateTimeEntryRequest = {
+          id: currentEntry,
+          ...baseRequest
+        };
 
-  this.timeEntryService.updateTimeEntry(updateRequest).subscribe({
-    next: (updatedEntry) => {
-      this.submitting.set(false);
-      this.dialogRef.close({ action: 'update', data: updatedEntry });
-    },
-    error: (error) => {
-      console.error('Error updating time entry:', error);
-      this.submitting.set(false);
-    }
-  });
-} else {
-  // Create new entry
-  const createRequest = {
-    ...baseRequest
-  };
+        this.timeEntryService.updateTimeEntry(updateRequest).subscribe({
+          next: (updatedEntry) => {
+            this.submitting.set(false);
+            this.dialogRef.close({ action: 'update', data: updatedEntry });
+          },
+          error: (error) => {
+            console.error('Error updating time entry:', error);
+            this.submitting.set(false);
+          }
+        });
+      } else {
+        // Create new entry
+        const createRequest = {
+          ...baseRequest
+        };
 
-  this.timeEntryService.createTimeEntry(createRequest).subscribe({
-    next: (newEntry) => {
-      this.submitting.set(false);
-      this.dialogRef.close({ action: 'create', data: newEntry });
-    },
-    error: (error) => {
-      console.error('Error creating time entry:', error);
-      this.submitting.set(false);
-    }
-  });
+        this.timeEntryService.createTimeEntry(createRequest).subscribe({
+          next: (newEntry) => {
+            this.submitting.set(false);
+            this.dialogRef.close({ action: 'create', data: newEntry });
+          },
+          error: (error) => {
+            console.error('Error creating time entry:', error);
+            this.submitting.set(false);
+          }
+        });
+      }
     }
   }
 
@@ -537,19 +535,10 @@ if (currentEntry) {
     if (confirm('Are you sure you want to delete this time entry?')) {
       this.submitting.set(true);
       
-const currentEntry = this.currentEntryId();
-
-this.timeEntryService.deleteTimeEntry(currentEntry).subscribe({
-  next: () => {
-    this.submitting.set(false);
-    this.dialogRef.close({ action: 'delete', data: { id: currentEntry } });
-  },
-  error: (error) => {
-    console.error('Error deleting time entry:', error);
-    this.submitting.set(false);
-  }
-});
-
+      this.timeEntryService.deleteTimeEntry(currentEntry).subscribe({
+        next: () => {
+          this.submitting.set(false);
+          this.dialogRef.close({ action: 'delete', data: { id: currentEntry } });
         },
         error: (error) => {
           console.error('Error deleting time entry:', error);
@@ -560,21 +549,16 @@ this.timeEntryService.deleteTimeEntry(currentEntry).subscribe({
   }
 
 
-  private calculateWorkedTime(startTime: string, endTime: string, breakStartTime: string, breakEndTime: string): string {
-        // Validate input times
+  private calculateWorkedTime(startTime: string, endTime: string, breakStartTime: string, breakEndTime: string): string;
+  private calculateWorkedTime(startTime: string, endTime: string, breakDuration: string): string;
+  private calculateWorkedTime(startTime: string, endTime: string, breakStartTimeOrDuration: string, breakEndTime?: string): string {
+    // Validate input times
     if (!startTime || !endTime) {
       return '00:00';
     }
+
     const start = this.parseTime(startTime);
     const end = this.parseTime(endTime);
-    const breakStart = this.parseTime(breakStartTime);
-    const breakEnd = this.parseTime(breakEndTime);
-
-    const breakDuration = breakEnd - breakStart;
-    
-    if (breakDuration < 0) {
-      return '00:00';
-    }
 
     // If parsing failed, return 00:00
     if (start === 0 && startTime !== '00:00') {
@@ -583,18 +567,26 @@ this.timeEntryService.deleteTimeEntry(currentEntry).subscribe({
     if (end === 0 && endTime !== '00:00') {
       return '00:00';
     }
-    /*
-    * DEPRECATED: Overnight work is no longer an option.
-    */
-    // Handle overnight work (end time is next day)
-    let totalMinutes: number;
-    if (end < start) {
-      // Overnight shift: add 24 hours to end time
-      totalMinutes = (end + 24 * 60) - start - breakTime;
+
+    let breakDurationMinutes = 0;
+
+    if (breakEndTime) {
+      // New format: break start and end times
+      const breakStart = this.parseTime(breakStartTimeOrDuration);
+      const breakEnd = this.parseTime(breakEndTime);
+      breakDurationMinutes = breakEnd - breakStart;
     } else {
-      // Same day shift
-      totalMinutes = end - start - breakTime;
+      // Legacy format: break duration string
+      breakDurationMinutes = this.parseTime(breakStartTimeOrDuration);
     }
+
+    // Ensure valid break duration
+    if (breakDurationMinutes < 0) {
+      breakDurationMinutes = 0;
+    }
+
+    // Calculate work duration (same day only - overnight deprecated)
+    let totalMinutes = end - start - breakDurationMinutes;
     
     // Ensure we don't have negative time
     if (totalMinutes < 0) {
