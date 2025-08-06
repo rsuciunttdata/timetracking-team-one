@@ -30,7 +30,7 @@ Designed to manage productivity through efficient time entry management and vali
 - ✅ Approve or reject submitted entries
 - 🕵️ Review daily/weekly logs for all users
 - 🗃️ Filter and sort entries by user, status, and date
-- 🔔 Optional notifications for pending submissions (coming soon)
+- 📄 Export entries to excel
 - 📊 Analytics and reports module (coming soon)
 
 ---
@@ -52,12 +52,12 @@ Designed to manage productivity through efficient time entry management and vali
 
 ## 🌐 Live Demo
 
-> [TimeTracker](https://timetracking-team-pvwhcs4q8-tudor-atodireseis-projects.vercel.app/)
+> [TimeTracker](https://timetracking-team-one.vercel.app/)
 
 **until full release use link:**
 
 - for login:
-    [TimeTracker](https://timetracking-team-pvwhcs4q8-tudor-atodireseis-projects.vercel.app/login)
+    [TimeTracker](https://timetracking-team-one.vercel.app/login)
 
 - if loged in:
-    [TimeTracker](https://timetracking-team-pvwhcs4q8-tudor-atodireseis-projects.vercel.app/timesheet)
+    [TimeTracker](https://timetracking-team-one.vercel.app/timesheet)
