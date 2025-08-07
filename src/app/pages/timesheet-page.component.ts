@@ -55,7 +55,7 @@ export class TimesheetPageComponent implements OnInit {
   private startDateSignal = signal<Date | null>(null);
   private endDateSignal = signal<Date | null>(null);
   private summaryDataSignal = signal<{ totalEntries: number; totalHours: string }>({ totalEntries: 0, totalHours: '0:00' });
-  private allTimeEntriesSignal = signal<TimeEntry[]>([]);
+  protected allTimeEntriesSignal = signal<TimeEntry[]>([]);
 
   // Computed signals for summary cards
   todaySummary = computed(() => {

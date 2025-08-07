@@ -156,6 +156,7 @@
       <div class="bg-white/95 backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl overflow-hidden">
         <div class="p-6">
           <app-timesheet-table
+            [entries]="allTimeEntriesSignal()"
             [dateFilter]="dateFilter()"
             (summaryData)="onSummaryDataReceived($event)"
             (editEntry)="onEditEntry($event)"
