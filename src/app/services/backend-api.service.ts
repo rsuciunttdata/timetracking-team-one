@@ -1,0 +1,346 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+
+import {
+  TimeEntry,
+  CreateTimeEntryRequest,
+  UpdateTimeEntryRequest
+} from '../interfaces/time-entry.interface';
+import { ApiResponse } from '../interfaces/api.interface';
+import { 
+  API_CONFIG,
+  getDailyEndpoint, 
+  getUserMonthlyEndpoint, 
+  getUserWeeklyEndpoint 
+} from '../config/api.config';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class BackendApiService {
+  private readonly baseUrl = API_CONFIG.BASE_URL;
+
+  constructor(private http: HttpClient) { }
+
+  // ===== DAILY TIME ENTRY OPERATIONS =====
+
+  /**
+   * Get daily time entry for a specific date
+   * GET /daily/by-date/{date}
+   */
+  getDailyTimeEntry(date: Date): Observable<TimeEntry | null> {
+    const endpoint = getDailyEndpoint(date);
+    
+    return this.http.get<ApiResponse<TimeEntry>>(endpoint, this.getHttpOptions())
+      .pipe(
+        map(response => this.handleApiResponse(response)),
+        catchError(error => this.handleError('getDailyTimeEntry', error))
+      );
+  }
+
+  /**
+   * Create daily time entry for a specific date
+   * POST /daily/by-date/{date}
+   */
+  createDailyTimeEntry(date: Date, timeEntry: Omit<CreateTimeEntryRequest, 'userId' | 'date'>): Observable<TimeEntry> {
+    const currentUserId = this.getCurrentUserId();
+    if (!currentUserId) {
+      return throwError(() => new Error('User not authenticated'));
+    }
+
+    const endpoint = getDailyEndpoint(date);
+    const payload = {
+      ...timeEntry,
+      userId: currentUserId,
+      date: date.toISOString().split('T')[0] // YYYY-MM-DD format
+    };
+
+    return this.http.post<ApiResponse<TimeEntry>>(endpoint, payload, this.getHttpOptions())
+      .pipe(
+        map(response => this.handleApiResponse(response)),
+        catchError(error => this.handleError('createDailyTimeEntry', error))
+      );
+  }
+
+  /**
+   * Update daily time entry for a specific date
+   * PATCH /daily/by-date/{date}
+   */
+  updateDailyTimeEntry(date: Date, timeEntry: Partial<UpdateTimeEntryRequest>): Observable<TimeEntry> {
+    const endpoint = getDailyEndpoint(date);
+
+    return this.http.patch<ApiResponse<TimeEntry>>(endpoint, timeEntry, this.getHttpOptions())
+      .pipe(
+        map(response => this.handleApiResponse(response)),
+        catchError(error => this.handleError('updateDailyTimeEntry', error))
+      );
+  }
+
+  /**
+   * Delete daily time entry for a specific date
+   * DELETE /daily/by-date/{date}
+   */
+  deleteDailyTimeEntry(date: Date): Observable<void> {
+    const endpoint = getDailyEndpoint(date);
+
+    return this.http.delete<ApiResponse<void>>(endpoint, this.getHttpOptions())
+      .pipe(
+        map(() => undefined),
+        catchError(error => this.handleError('deleteDailyTimeEntry', error))
+      );
+  }
+
+  // ===== USER MONTHLY OPERATIONS =====
+
+  /**
+   * Get user's monthly time entries for a specific month
+   * GET /{userId}/monthly/by-date/{date}
+   */
+  getUserMonthlyTimeEntries(userId: string, date: Date): Observable<TimeEntry[]> {
+    const endpoint = getUserMonthlyEndpoint(userId, date);
+
+    return this.http.get<ApiResponse<TimeEntry[]>>(endpoint, this.getHttpOptions())
+      .pipe(
+        map(response => this.handleApiResponse(response)),
+        catchError(error => this.handleError('getUserMonthlyTimeEntries', error))
+      );
+  }
+
+  /**
+   * Get current user's monthly time entries
+   */
+  getCurrentUserMonthlyTimeEntries(date: Date): Observable<TimeEntry[]> {
+    const currentUserId = this.getCurrentUserId();
+    if (!currentUserId) {
+      return throwError(() => new Error('User not authenticated'));
+    }
+
+    return this.getUserMonthlyTimeEntries(currentUserId, date);
+  }
+
+  // ===== USER WEEKLY OPERATIONS =====
+
+  /**
+   * Get user's weekly time entries for a specific week
+   * GET /{userId}/weekly/by-date/{date}
+   */
+  getUserWeeklyTimeEntries(userId: string, date: Date): Observable<TimeEntry[]> {
+    const endpoint = getUserWeeklyEndpoint(userId, date);
+
+    return this.http.get<ApiResponse<TimeEntry[]>>(endpoint, this.getHttpOptions())
+      .pipe(
+        map(response => this.handleApiResponse(response)),
+        catchError(error => this.handleError('getUserWeeklyTimeEntries', error))
+      );
+  }
+
+  /**
+   * Get current user's weekly time entries
+   */
+  getCurrentUserWeeklyTimeEntries(date: Date): Observable<TimeEntry[]> {
+    const currentUserId = this.getCurrentUserId();
+    if (!currentUserId) {
+      return throwError(() => new Error('User not authenticated'));
+    }
+
+    return this.getUserWeeklyTimeEntries(currentUserId, date);
+  }
+
+  // ===== ADMIN OPERATIONS =====
+
+  /**
+   * Get all users' time entries for a specific date (admin only)
+   * GET /admin/daily/by-date/{date}
+   */
+  getAdminDailyTimeEntries(date: Date): Observable<TimeEntry[]> {
+    if (!this.isAdmin()) {
+      return throwError(() => new Error('Access denied: Admin privileges required'));
+    }
+
+    const endpoint = `${this.baseUrl}/admin/daily/by-date/${this.formatDateForApi(date)}`;
+
+    return this.http.get<ApiResponse<TimeEntry[]>>(endpoint, this.getHttpOptions())
+      .pipe(
+        map(response => this.handleApiResponse(response)),
+        catchError(error => this.handleError('getAdminDailyTimeEntries', error))
+      );
+  }
+
+  /**
+   * Approve a time entry (admin only)
+   * PATCH /admin/time-entries/{id}/approve
+   */
+  approveTimeEntry(entryId: string): Observable<TimeEntry> {
+    if (!this.isAdmin()) {
+      return throwError(() => new Error('Access denied: Admin privileges required'));
+    }
+
+    const endpoint = `${this.baseUrl}/admin/time-entries/${entryId}/approve`;
+    const payload = {
+      approvedBy: this.getCurrentUserId(),
+      approvedAt: new Date().toISOString()
+    };
+
+    return this.http.patch<ApiResponse<TimeEntry>>(endpoint, payload, this.getHttpOptions())
+      .pipe(
+        map(response => this.handleApiResponse(response)),
+        catchError(error => this.handleError('approveTimeEntry', error))
+      );
+  }
+
+  /**
+   * Reject a time entry (admin only)
+   * PATCH /admin/time-entries/{id}/reject
+   */
+  rejectTimeEntry(entryId: string, reason?: string): Observable<TimeEntry> {
+    if (!this.isAdmin()) {
+      return throwError(() => new Error('Access denied: Admin privileges required'));
+    }
+
+    const endpoint = `${this.baseUrl}/admin/time-entries/${entryId}/reject`;
+    const payload = {
+      rejectedBy: this.getCurrentUserId(),
+      rejectedAt: new Date().toISOString(),
+      rejectionReason: reason
+    };
+
+    return this.http.patch<ApiResponse<TimeEntry>>(endpoint, payload, this.getHttpOptions())
+      .pipe(
+        map(response => this.handleApiResponse(response)),
+        catchError(error => this.handleError('rejectTimeEntry', error))
+      );
+  }
+
+  // ===== BULK OPERATIONS =====
+
+  /**
+   * Submit multiple time entries for approval
+   * POST /bulk/submit
+   */
+  bulkSubmitTimeEntries(entryIds: string[]): Observable<TimeEntry[]> {
+    const endpoint = `${this.baseUrl}/bulk/submit`;
+    const payload = {
+      entryIds,
+      submittedBy: this.getCurrentUserId(),
+      submittedAt: new Date().toISOString()
+    };
+
+    return this.http.post<ApiResponse<TimeEntry[]>>(endpoint, payload, this.getHttpOptions())
+      .pipe(
+        map(response => this.handleApiResponse(response)),
+        catchError(error => this.handleError('bulkSubmitTimeEntries', error))
+      );
+  }
+
+  /**
+   * Export time entries to various formats
+   * GET /export/{format}/{userId}/by-date-range/{startDate}/{endDate}
+   */
+  exportTimeEntries(
+    format: 'excel' | 'csv' | 'pdf',
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): Observable<Blob> {
+    const endpoint = `${this.baseUrl}/export/${format}/${userId}/by-date-range/${this.formatDateForApi(startDate)}/${this.formatDateForApi(endDate)}`;
+
+    return this.http.get(endpoint, {
+      ...this.getHttpOptions(),
+      responseType: 'blob'
+    }).pipe(
+      catchError(error => this.handleError('exportTimeEntries', error))
+    );
+  }
+
+  // ===== UTILITY METHODS =====
+
+  /**
+   * Check API health
+   * GET /health
+   */
+  checkHealth(): Observable<{ status: string; timestamp: string }> {
+    const endpoint = `${this.baseUrl}/health`;
+
+    return this.http.get<{ status: string; timestamp: string }>(endpoint)
+      .pipe(
+        catchError(error => this.handleError('checkHealth', error))
+      );
+  }
+
+  // ===== PRIVATE HELPER METHODS =====
+
+  private getHttpOptions() {
+    const token = this.getAuthToken();
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    });
+
+    return { headers };
+  }
+
+  private handleApiResponse<T>(response: ApiResponse<T>): T {
+    if (response.success && response.data !== undefined) {
+      return response.data;
+    }
+    
+    throw new Error(response.message || 'API request failed');
+  }
+
+  private handleError(operation: string, error: any): Observable<never> {
+    console.error(`${operation} failed:`, error);
+    
+    let errorMessage = 'An unexpected error occurred';
+    
+    if (error.error?.message) {
+      errorMessage = error.error.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    } else if (error.status) {
+      switch (error.status) {
+        case 400:
+          errorMessage = 'Bad request - please check your input';
+          break;
+        case 401:
+          errorMessage = 'Unauthorized - please log in again';
+          break;
+        case 403:
+          errorMessage = 'Forbidden - you don\'t have permission for this action';
+          break;
+        case 404:
+          errorMessage = 'Resource not found';
+          break;
+        case 500:
+          errorMessage = 'Server error - please try again later';
+          break;
+        default:
+          errorMessage = `HTTP Error ${error.status}`;
+      }
+    }
+
+    return throwError(() => new Error(errorMessage));
+  }
+
+  private formatDateForApi(date: Date): string {
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+  }
+
+  private getCurrentUserId(): string | null {
+    return localStorage.getItem('userId');
+  }
+
+  private getCurrentUserRole(): string | null {
+    return localStorage.getItem('role');
+  }
+
+  private isAdmin(): boolean {
+    return this.getCurrentUserRole() === 'admin';
+  }
+
+  private getAuthToken(): string | null {
+    return localStorage.getItem('authToken');
+  }
+}
