@@ -5,13 +5,14 @@
 /* Custom font imports */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-html, body { 
-  height: 100%; 
+html,
+body {
+  height: 100%;
 }
 
-body { 
-  margin: 0; 
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: linear-gradient(-45deg, #3b82f6, #8b5cf6, #06b6d4, #10b981);
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
@@ -25,9 +26,11 @@ body {
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }
@@ -35,18 +38,24 @@ body {
 
 /* Floating elements animation */
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-20px);
   }
 }
 
 @keyframes floatReverse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
   }
+
   50% {
     transform: translateY(-15px) rotate(180deg);
   }
@@ -111,6 +120,16 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+mat-toolbar a[mat-button] {
+  border-radius: 8px;
+  padding: 6px 12px;
+  transition: background-color 0.2s ease;
+}
+
+mat-toolbar a[mat-button]:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
 /* Print styles */
 @media print {
   body {
@@ -118,12 +137,12 @@ body {
     color: black !important;
     animation: none !important;
   }
-  
+
   .bg-gradient-to-br,
   .bg-gradient-to-r {
     background: white !important;
   }
-  
+
   .animate-float,
   .animate-slide-in-left,
   .animate-slide-in-right {

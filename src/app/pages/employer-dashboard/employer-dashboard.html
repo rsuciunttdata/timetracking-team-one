@@ -8,7 +8,17 @@
     Hi, <span class="font-medium capitalize">{{ username}}</span>!
   </div>
 
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-6 font-medium capitalize">
+    <a mat-button routerLink="/timesheet" routerLinkActive="active-link">
+      My Timesheet
+    </a>
+    <a mat-button routerLink="/employer-dashboard" routerLinkActive="active-link">
+      Employer Dashboard
+    </a>
+  </div>
+
+
+  <div class="flex items-center gap-6">
     <button mat-icon-button (click)="onLogout()" aria-label="Logout">
       <mat-icon>logout</mat-icon>
     </button>

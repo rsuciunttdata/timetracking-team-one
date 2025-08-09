@@ -50,6 +50,8 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     }
   }
 
+  @Input() fetchScope: 'self' | 'all' = 'self';
+
   // Outputs for parent communication
   @Output() editEntry = new EventEmitter<TimeEntry>();
   @Output() deleteEntry = new EventEmitter<TimeEntry>();
@@ -229,7 +231,17 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     this.loading.set(true);
     const pagination = { page: 1, pageSize: 100 };
 
-    this.timeEntryService.getTimeEntries(pagination).subscribe({
+    const df = this.dateFilterSignal();
+    const filter = {
+      startDate: df?.startDate ?? undefined,
+      endDate: df?.endDate ?? undefined
+    };
+
+    const req$ = this.fetchScope === 'all'
+      ? this.timeEntryService.getAllTimeEntries(pagination, filter as any)
+      : this.timeEntryService.getUserTimeEntries(pagination, filter);
+
+    req$.subscribe({
       next: (response) => {
         this.allEntries.set(response.data);
         this.loading.set(false);
@@ -241,6 +253,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
       }
     });
   }
+
 
   refreshData(): void {
     this.loadTimeEntries();

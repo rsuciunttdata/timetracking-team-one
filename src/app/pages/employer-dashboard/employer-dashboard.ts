@@ -11,10 +11,11 @@ import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { UserService, AppUser } from '../../services/user.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-employer-dashboard',
-  imports: [MatFormFieldModule, MatOptionModule, TimesheetTableComponent, CommonModule, MatSelectModule, MatIconModule, MatToolbarModule],
+  imports: [MatFormFieldModule, MatOptionModule, TimesheetTableComponent, CommonModule, MatSelectModule, MatIconModule, MatToolbarModule, RouterModule],
   templateUrl: './employer-dashboard.html',
   styleUrl: './employer-dashboard.css'
 })
