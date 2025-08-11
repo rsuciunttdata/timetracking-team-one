@@ -72,9 +72,6 @@ hasWarnings = computed(() => {
 
 previewWorkedTime = computed(() => {
   const values = this.formValues();
-  if (values.startTime && values.endTime && values.breakStartTime && values.breakEndTime) {
-    return this.calculateWorkedTime(values.startTime, values.endTime, values.breakStartTime, values.breakEndTime);
-  }
   if (values.startTime && values.endTime) {
     return this.calculateWorkedTime(values.startTime, values.endTime, values.breakDuration || '');
   }
@@ -110,31 +107,13 @@ previewWorkedTime = computed(() => {
     return { errors, warnings };
   }
 
-  get breakStartTimeValidation(): FieldValidation {
-    const control = this.timeEntryForm?.get('breakStartTime');
+  get breakDurationValidation(): FieldValidation {
+    const control = this.timeEntryForm?.get('breakDuration');
     const errors: string[] = [];
     const warnings: string[] = [];
 
     if (control?.errors && control.touched) {
-      if (control.errors['pattern']) errors.push('Invalid time format (HH:MM)');
-      if (control.errors['breakOutsideWorkHours']) errors.push('Break must be within work hours');
-      if (control.errors['incompleteBreakTime']) errors.push('Both break start and end times are required');
-    }
-
-    return { errors, warnings };
-  }
-
-  get breakEndTimeValidation(): FieldValidation {
-    const control = this.timeEntryForm?.get('breakEndTime');
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    if (control?.errors && control.touched) {
-      if (control.errors['pattern']) errors.push('Invalid time format (HH:MM)');
-      if (control.errors['breakEndTimeBeforeStart']) errors.push('Break end time must be after break start time');
-      if (control.errors['breakOutsideWorkHours']) errors.push('Break must be within work hours');
-      if (control.errors['incompleteBreakTime']) errors.push('Both break start and end times are required');
-      if (control.errors['breakTooLong']) warnings.push('Break duration is unusually long (>4 hours)');
+      if (control.errors['pattern']) errors.push('Invalid duration format (HH:MM)');
     }
 
     return { errors, warnings };
@@ -147,50 +126,29 @@ previewWorkedTime = computed(() => {
   private initializeForm(): void {
     const entry = this.data.timeEntry;
     
-    let breakStartTime = '';
-    let breakEndTime = '';
-    
-    if (entry.breakDuration && entry.startTime) {
-      const workStartMinutes = this.parseTime(entry.startTime);
-      const breakDurationMinutes = this.parseTime(entry.breakDuration || '00:00');
-      const breakStartMinutes = workStartMinutes + 240; // 4 hours after start
-      const breakEndMinutes = breakStartMinutes + breakDurationMinutes;
-      
-      breakStartTime = this.minutesToTime(breakStartMinutes);
-      breakEndTime = this.minutesToTime(breakEndMinutes);
+    // Convert integer breakDuration to string format for display
+    let breakDurationString = '';
+    if (entry.breakDuration && typeof entry.breakDuration === 'number') {
+      breakDurationString = this.minutesToTime(entry.breakDuration);
     }
     
     this.timeEntryForm = this.fb.group({
       date: [entry.date, [Validators.required]],
-startTime: [entry.startTime, [
-  Validators.required,
-  Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-]],
-endTime: [entry.endTime || '', [
-  Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-]],
-breakDuration: [entry.breakDuration || '', [
-  Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-]],
-breakStartTime: [breakStartTime, [
-  Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-]],
-breakEndTime: [breakEndTime, [
-  Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-]]
+      startTime: [entry.startTime, [
+        Validators.required,
+        Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+      ]],
+      endTime: [entry.endTime || '', [
+        Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+      ]],
+      breakDuration: [breakDurationString, [
+        Validators.pattern(/^([0-9]|[0-1][0-9]|2[0-3]):[0-5][0-9]$/)
+      ]]
     });
 
     // Add cross-field validators
     this.timeEntryForm.get('endTime')?.addValidators([
       this.endTimeValidator.bind(this)
-    ]);
-    
-    this.timeEntryForm.get('breakStartTime')?.addValidators([
-      this.breakStartTimeValidator.bind(this)
-    ]);
-    
-    this.timeEntryForm.get('breakEndTime')?.addValidators([
-      this.breakEndTimeValidator.bind(this)
     ]);
 
     // Watch for date changes and populate data for that date
@@ -229,14 +187,12 @@ breakEndTime: [breakEndTime, [
     }
 
     // Check for break duration warning
-    if (values.breakStartTime && values.breakEndTime) {
-      const breakStart = this.parseTime(values.breakStartTime);
-      const breakEnd = this.parseTime(values.breakEndTime);
-      const breakDuration = breakEnd - breakStart;
+    if (values.breakDuration) {
+      const breakDurationMinutes = this.timeStringToMinutes(values.breakDuration);
 
-      if (breakDuration > 4 * 60) { // > 4 hours
+      if (breakDurationMinutes > 4 * 60) { // > 4 hours
         warnings['breakDuration'] = ['Break duration is unusually long (>4 hours)'];
-      } else if (breakDuration > 2 * 60) { // > 2 hours but <= 4
+      } else if (breakDurationMinutes > 2 * 60) { // > 2 hours but <= 4
         warnings['breakDuration'] = ['Break duration is longer than usual (>2 hours)'];
       }
     }
@@ -246,17 +202,9 @@ breakEndTime: [breakEndTime, [
 
   private revalidateTimeFields(): void {
     const endTimeControl = this.timeEntryForm.get('endTime');
-    const breakStartControl = this.timeEntryForm.get('breakStartTime');
-    const breakEndControl = this.timeEntryForm.get('breakEndTime');
 
     if (endTimeControl && endTimeControl.value) {
       endTimeControl.updateValueAndValidity({ emitEvent: false });
-    }
-    if (breakStartControl && breakStartControl.value) {
-      breakStartControl.updateValueAndValidity({ emitEvent: false });
-    }
-    if (breakEndControl && breakEndControl.value) {
-      breakEndControl.updateValueAndValidity({ emitEvent: false });
     }
   }
 
@@ -282,81 +230,6 @@ breakEndTime: [breakEndTime, [
     const workDurationMinutes = endMinutes - startMinutes;
     if (workDurationMinutes > 24 * 60) {
       return { workDayTooLong: true };
-    }
-
-    return null;
-  }
-
-  private breakStartTimeValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value || !this.timeEntryForm) {
-      return null;
-    }
-
-    const startTime = this.timeEntryForm.get('startTime')?.value;
-    const endTime = this.timeEntryForm.get('endTime')?.value;
-    const breakEndTime = this.timeEntryForm.get('breakEndTime')?.value;
-
-    // ERRORS (prevent form submission)
-    if (control.value && !breakEndTime) {
-      return { incompleteBreakTime: true };
-    }
-
-    if (startTime && endTime) {
-      const startMinutes = this.parseTime(startTime);
-      const endMinutes = this.parseTime(endTime);
-      const breakStartMinutes = this.parseTime(control.value);
-
-      if (breakStartMinutes <= startMinutes || breakStartMinutes >= endMinutes) {
-        return { breakOutsideWorkHours: true };
-      }
-    }
-
-    return null;
-  }
-
-  private breakEndTimeValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value || !this.timeEntryForm) {
-      return null;
-    }
-
-    const startTime = this.timeEntryForm.get('startTime')?.value;
-    const endTime = this.timeEntryForm.get('endTime')?.value;
-    const breakStartTime = this.timeEntryForm.get('breakStartTime')?.value;
-
-    // ERRORS (prevent form submission)
-    if (control.value && !breakStartTime) {
-      return { incompleteBreakTime: true };
-    }
-
-    if (breakStartTime) {
-      const breakStartMinutes = this.parseTime(breakStartTime);
-      const breakEndMinutes = this.parseTime(control.value);
-
-      if (breakEndMinutes <= breakStartMinutes) {
-        return { breakEndTimeBeforeStart: true };
-      }
-
-      // Break cannot exceed work duration (error)
-      if (startTime && endTime) {
-        const startMinutes = this.parseTime(startTime);
-        const endMinutes = this.parseTime(endTime);
-        const breakDuration = breakEndMinutes - breakStartMinutes;
-        const workDuration = endMinutes - startMinutes;
-
-        if (breakDuration >= workDuration) {
-          return { breakTooLong: true };
-        }
-      }
-    }
-
-    if (startTime && endTime) {
-      const startMinutes = this.parseTime(startTime);
-      const endMinutes = this.parseTime(endTime);
-      const breakEndMinutes = this.parseTime(control.value);
-
-      if (breakEndMinutes <= startMinutes || breakEndMinutes >= endMinutes) {
-        return { breakOutsideWorkHours: true };
-      }
     }
 
     return null;
@@ -431,10 +304,17 @@ breakEndTime: [breakEndTime, [
    */
   private populateFormWithEntry(entry: TimeEntry): void {
     console.log('📝 Populating form with entry:', entry);
+    
+    // Convert integer breakDuration to string format for the form
+    let breakDurationString = '';
+    if (entry.breakDuration && typeof entry.breakDuration === 'number') {
+      breakDurationString = this.minutesToTime(entry.breakDuration);
+    }
+    
     this.timeEntryForm.patchValue({
       startTime: entry.startTime,
       endTime: entry.endTime || '',
-      breakDuration: entry.breakDuration || ''
+      breakDuration: breakDurationString
     }, { emitEvent: false });
     
     this.formValues.set(this.timeEntryForm.value);
@@ -463,25 +343,18 @@ breakEndTime: [breakEndTime, [
       const currentEntry = this.currentEntryId();
       const formValue = this.timeEntryForm.getRawValue();
 
+      // Convert break duration string to minutes for the API
+      let breakDurationMinutes = 0;
+      if (formValue.breakDuration && formValue.breakDuration.trim() !== '') {
+        breakDurationMinutes = this.timeStringToMinutes(formValue.breakDuration);
+      }
+
       const baseRequest = {
         date: new Date(formValue.date),
         startTime: formValue.startTime,
         endTime: formValue.endTime || '',
-        breakDuration: formValue.breakDuration || ''
+        breakDuration: breakDurationMinutes
       };
-
-      // Compute breakDuration from breakStartTime and breakEndTime if available
-      if (formValue.breakStartTime && formValue.breakEndTime) {
-        const breakStart = this.parseTime(formValue.breakStartTime);
-        const breakEnd = this.parseTime(formValue.breakEndTime);
-        const breakDurationMinutes = breakEnd - breakStart;
-
-        if (breakDurationMinutes > 0) {
-          const breakHours = Math.floor(breakDurationMinutes / 60);
-          const breakMins = breakDurationMinutes % 60;
-          baseRequest.breakDuration = `${breakHours.toString().padStart(2, '0')}:${breakMins.toString().padStart(2, '0')}`;
-        }
-      }
 
       if (currentEntry) {
         // Update existing entry
@@ -548,6 +421,10 @@ breakEndTime: [breakEndTime, [
     }
   }
 
+  private timeStringToMinutes(timeString: string): number {
+    if (!timeString || timeString.trim() === '') return 0;
+    return this.parseTime(timeString);
+  }
 
   private calculateWorkedTime(startTime: string, endTime: string, breakStartTime: string, breakEndTime: string): string;
   private calculateWorkedTime(startTime: string, endTime: string, breakDuration: string): string;

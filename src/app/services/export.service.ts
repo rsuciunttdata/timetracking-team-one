@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { TimeEntry } from '../interfaces/time-entry.interface';
+import { TimeUtil } from '../utils/time.util';
 
 export interface ExportOptions {
   filename?: string;
@@ -192,8 +193,8 @@ export class ExportService {
         dayOfWeek: new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date(entry.date)),
         startTime: entry.startTime || '',
         endTime: entry.endTime || '',
-        breakDuration: entry.breakDuration || '',
-        totalWorked: this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration),
+        breakDuration: entry.breakDuration ? TimeUtil.minutesToTimeString(entry.breakDuration) : '',
+        totalWorked: TimeUtil.calculateWorkedTimeString(entry.startTime || '', entry.endTime || '', entry.breakDuration || 0),
         status: this.getStatusText(entry),
         created: new Intl.DateTimeFormat('en-US', {
           year: 'numeric',
@@ -339,9 +340,12 @@ export class ExportService {
     const realEntries = entries.filter(entry => !this.isPlaceholderEntry(entry));
     const totalEntries = realEntries.length;
     const totalMinutes = realEntries.reduce((total, entry) => {
-      const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
-      const [hours, minutes] = workedTime.split(':').map(Number);
-      return total + (hours * 60) + minutes;
+      const workedMinutes = TimeUtil.calculateWorkedMinutes(
+        TimeUtil.timeStringToMinutes(entry.startTime || ''),
+        TimeUtil.timeStringToMinutes(entry.endTime || ''),
+        entry.breakDuration || 0
+      );
+      return total + workedMinutes;
     }, 0);
 
     const totalHours = Math.floor(totalMinutes / 60);
@@ -480,8 +484,12 @@ export class ExportService {
       return 'Pending';
     }
     
-    const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
-    const [hours] = workedTime.split(':').map(Number);
+    const workedMinutes = TimeUtil.calculateWorkedMinutes(
+      TimeUtil.timeStringToMinutes(entry.startTime),
+      TimeUtil.timeStringToMinutes(entry.endTime),
+      entry.breakDuration || 0
+    );
+    const hours = Math.floor(workedMinutes / 60);
     
     if (hours >= 8) {
       return 'Complete';

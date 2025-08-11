@@ -10,7 +10,7 @@ export interface TimeEntry {
   date: Date;
   startTime: string; // Required - Format: "HH:mm"
   endTime?: string;   // Optional - Format: "HH:mm"
-  breakDuration?: string; // Optional - Format: "HH:mm"
+  breakDuration?: number; // Optional - Duration in minutes
   createdAt: Date;
   updatedAt: Date;
   status: EntryStatus;
@@ -20,7 +20,7 @@ export interface CreateTimeEntryRequest {
   date: Date;
   startTime: string; // Required
   endTime?: string;   // Optional
-  breakDuration?: string; // Optional
+  breakDuration?: number; // Optional - Duration in minutes
 }
 
 export interface CreateTimeEntryRequestWithUser extends CreateTimeEntryRequest {
@@ -30,14 +30,6 @@ export interface CreateTimeEntryRequestWithUser extends CreateTimeEntryRequest {
 export interface UpdateTimeEntryRequest extends Partial<CreateTimeEntryRequest> {
   id: string;
   userId?: string; 
-}
-
-export interface TimeEntryFormData {
-  date: Date;
-  startTime: string; // Required
-  endTime?: string;   // Optional
-  breakStartTime?: string; // Optional
-  breakEndTime?: string;   // Optional
 }
 
 export interface TimeEntryFilter {

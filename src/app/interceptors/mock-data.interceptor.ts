@@ -185,7 +185,7 @@ function handleCreateTimeEntry(req: any): ApiResponse<TimeEntry> {
     breakDuration: requestData.breakDuration, // Optional
     createdAt: new Date(),
     updatedAt: new Date(),
-    status: calculateStatus(requestData.startTime, requestData.endTime || '', requestData.breakDuration || '')
+    status: calculateStatus(requestData.startTime, requestData.endTime || '', requestData.breakDuration || 0)
   };
 
   // Add to mock data
@@ -231,7 +231,7 @@ function handleUpdateTimeEntry(req: any): ApiResponse<TimeEntry> {
     status: calculateStatus(
       requestData.startTime || existingEntry.startTime, 
       requestData.endTime || existingEntry.endTime || '', 
-      requestData.breakDuration || existingEntry.breakDuration || ''
+      requestData.breakDuration || existingEntry.breakDuration || 0
     )
   };
 
@@ -300,7 +300,7 @@ function createErrorResponse(message: string, statusCode: number): ApiResponse<a
   };
 }
 
-function calculateStatus(startTime: string, endTime: string, breakDuration: string): EntryStatus {
+function calculateStatus(startTime: string, endTime: string, breakDuration: number): EntryStatus {
   const parse = (time: string): number => {
     if (!time) return 0;
     const [h, m] = time.split(':').map(Number);
@@ -309,7 +309,7 @@ function calculateStatus(startTime: string, endTime: string, breakDuration: stri
 
   const start = parse(startTime);
   const end = parse(endTime);
-  const breakMin = parse(breakDuration);
+  const breakMin = breakDuration || 0; // Already in minutes
 
   if (!startTime || !endTime || start >= end) {
     return 'completed_partially';
