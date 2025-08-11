@@ -17,6 +17,7 @@ import { AddModal } from '../components/modal/add-modal/add-modal';
 import { EditModal } from '../components/modal/edit-modal/edit-modal';
 import { TimeEntryService } from '../../app/services/time-entry.service';
 import { TimeEntry } from '../interfaces/time-entry.interface';
+import { TimeUtil } from '../utils/time.util';
 
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
@@ -274,9 +275,12 @@ export class TimesheetPageComponent implements OnInit {
     const totalMinutes = filteredEntries.reduce((total, entry) => {
       if (!entry.startTime || !entry.endTime) return total;
 
-      const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration || '0:00');
-      const [hours, minutes] = workedTime.split(':').map(Number);
-      return total + (hours * 60) + minutes;
+      const workedMinutes = TimeUtil.calculateWorkedMinutes(
+        TimeUtil.timeStringToMinutes(entry.startTime),
+        TimeUtil.timeStringToMinutes(entry.endTime),
+        entry.breakDuration || 0
+      );
+      return total + workedMinutes;
     }, 0);
 
     const totalHours = Math.floor(totalMinutes / 60);

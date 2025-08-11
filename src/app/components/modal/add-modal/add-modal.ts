@@ -62,8 +62,9 @@ export class AddModal implements OnInit {
   
   previewWorkedTime = computed(() => {
     const values = this.formValues();
-    if (values.startTime && values.endTime && values.breakStartTime && values.breakEndTime) {
-      return this.calculateWorkedTime(values.startTime, values.endTime, values.breakStartTime, values.breakEndTime);
+    if (values.startTime && values.endTime) {
+      const breakMinutes = values.breakDuration ? this.timeStringToMinutes(values.breakDuration) : 0;
+      return this.calculateWorkedTime(values.startTime, values.endTime, breakMinutes);
     }
     return '00:00';
   });
@@ -96,34 +97,32 @@ export class AddModal implements OnInit {
     return { errors, warnings };
   }
 
-  get breakStartTimeValidation(): FieldValidation {
-    const control = this.timeEntryForm?.get('breakStartTime');
+  get breakDurationValidation(): FieldValidation {
+    const control = this.timeEntryForm?.get('breakDuration');
     const errors: string[] = [];
     const warnings: string[] = [];
 
     if (control?.errors && control.touched) {
       if (control.errors['pattern']) errors.push('Invalid time format (HH:MM)');
-      if (control.errors['breakOutsideWorkHours']) errors.push('Break must be within work hours');
-      if (control.errors['incompleteBreakTime']) errors.push('Both break start and end times are required');
+      if (control.errors['breakTooLong']) warnings.push('Break duration is unusually long (>4 hours)');
     }
 
     return { errors, warnings };
   }
 
-  get breakEndTimeValidation(): FieldValidation {
-    const control = this.timeEntryForm?.get('breakEndTime');
-    const errors: string[] = [];
-    const warnings: string[] = [];
+  // Helper method to convert time string to minutes
+  private timeStringToMinutes(timeString: string): number {
+    if (!timeString || !timeString.includes(':')) return 0;
+    const [hours, minutes] = timeString.split(':').map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return 0;
+    return hours * 60 + minutes;
+  }
 
-    if (control?.errors && control.touched) {
-      if (control.errors['pattern']) errors.push('Invalid time format (HH:MM)');
-      if (control.errors['breakEndTimeBeforeStart']) errors.push('Break end time must be after break start time');
-      if (control.errors['breakOutsideWorkHours']) errors.push('Break must be within work hours');
-      if (control.errors['incompleteBreakTime']) errors.push('Both break start and end times are required');
-      if (control.errors['breakTooLong']) warnings.push('Break duration is unusually long (>4 hours)');
-    }
-
-    return { errors, warnings };
+  // Helper method to convert minutes to time string
+  private minutesToTimeString(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   }
 
   ngOnInit(): void {
@@ -143,11 +142,8 @@ export class AddModal implements OnInit {
       endTime: ['', [
         Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
       ]],
-      breakStartTime: ['', [
-        Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-      ]],
-      breakEndTime: ['', [
-        Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+      breakDuration: ['', [
+        Validators.pattern(/^([0-9]|[0-1][0-9]|2[0-3]):[0-5][0-9]$/)
       ]]
     });
 
@@ -155,17 +151,9 @@ export class AddModal implements OnInit {
     this.timeEntryForm.get('endTime')?.addValidators([
       this.endTimeValidator.bind(this)
     ]);
-    
-    this.timeEntryForm.get('breakStartTime')?.addValidators([
-      this.breakStartTimeValidator.bind(this)
-    ]);
-    
-    this.timeEntryForm.get('breakEndTime')?.addValidators([
-      this.breakEndTimeValidator.bind(this)
-    ]);
 
     // Subscribe to form changes
-    this.timeEntryForm.valueChanges.subscribe(values => {
+    this.timeEntryForm.valueChanges.subscribe((values: any) => {
       this.formValues.set(values);
       this.updateWarnings();
       this.revalidateTimeFields();
@@ -180,28 +168,24 @@ export class AddModal implements OnInit {
 
     // Check for work day duration warning
     if (values.startTime && values.endTime) {
-      const startMinutes = this.parseTime(values.startTime);
-      const endMinutes = this.parseTime(values.endTime);
+      const startMinutes = this.timeStringToMinutes(values.startTime);
+      const endMinutes = this.timeStringToMinutes(values.endTime);
       const workDuration = endMinutes - startMinutes;
 
       if (workDuration > 12 * 60) { // > 12 hours
         warnings['workDuration'] = ['Work day exceeds 12 hours'];
-      }
-
-      if (workDuration > 10 * 60) { // > 10 hours but <= 12
+      } else if (workDuration > 10 * 60) { // > 10 hours but <= 12
         warnings['workDuration'] = ['Work day is longer than usual (>10 hours)'];
       }
     }
 
     // Check for break duration warning
-    if (values.breakStartTime && values.breakEndTime) {
-      const breakStart = this.parseTime(values.breakStartTime);
-      const breakEnd = this.parseTime(values.breakEndTime);
-      const breakDuration = breakEnd - breakStart;
+    if (values.breakDuration) {
+      const breakMinutes = this.timeStringToMinutes(values.breakDuration);
 
-      if (breakDuration > 4 * 60) { // > 4 hours
+      if (breakMinutes > 4 * 60) { // > 4 hours
         warnings['breakDuration'] = ['Break duration is unusually long (>4 hours)'];
-      } else if (breakDuration > 2 * 60) { // > 2 hours but <= 4
+      } else if (breakMinutes > 2 * 60) { // > 2 hours but <= 4
         warnings['breakDuration'] = ['Break duration is longer than usual (>2 hours)'];
       }
     }
@@ -211,17 +195,9 @@ export class AddModal implements OnInit {
 
   private revalidateTimeFields(): void {
     const endTimeControl = this.timeEntryForm.get('endTime');
-    const breakStartControl = this.timeEntryForm.get('breakStartTime');
-    const breakEndControl = this.timeEntryForm.get('breakEndTime');
 
     if (endTimeControl && endTimeControl.value) {
       endTimeControl.updateValueAndValidity({ emitEvent: false });
-    }
-    if (breakStartControl && breakStartControl.value) {
-      breakStartControl.updateValueAndValidity({ emitEvent: false });
-    }
-    if (breakEndControl && breakEndControl.value) {
-      breakEndControl.updateValueAndValidity({ emitEvent: false });
     }
   }
 
@@ -235,8 +211,8 @@ export class AddModal implements OnInit {
       return null;
     }
 
-    const startMinutes = this.parseTime(startTime);
-    const endMinutes = this.parseTime(control.value);
+    const startMinutes = this.timeStringToMinutes(startTime);
+    const endMinutes = this.timeStringToMinutes(control.value);
 
     // ERRORS (prevent form submission)
     if (endMinutes <= startMinutes) {
@@ -250,81 +226,6 @@ export class AddModal implements OnInit {
     }
 
     // Warnings are handled separately in updateWarnings()
-    return null;
-  }
-
-  private breakStartTimeValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value || !this.timeEntryForm) {
-      return null;
-    }
-
-    const startTime = this.timeEntryForm.get('startTime')?.value;
-    const endTime = this.timeEntryForm.get('endTime')?.value;
-    const breakEndTime = this.timeEntryForm.get('breakEndTime')?.value;
-
-    // ERRORS (prevent form submission)
-    if (control.value && !breakEndTime) {
-      return { incompleteBreakTime: true };
-    }
-
-    if (startTime && endTime) {
-      const startMinutes = this.parseTime(startTime);
-      const endMinutes = this.parseTime(endTime);
-      const breakStartMinutes = this.parseTime(control.value);
-
-      if (breakStartMinutes <= startMinutes || breakStartMinutes >= endMinutes) {
-        return { breakOutsideWorkHours: true };
-      }
-    }
-
-    return null;
-  }
-
-  private breakEndTimeValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value || !this.timeEntryForm) {
-      return null;
-    }
-
-    const startTime = this.timeEntryForm.get('startTime')?.value;
-    const endTime = this.timeEntryForm.get('endTime')?.value;
-    const breakStartTime = this.timeEntryForm.get('breakStartTime')?.value;
-
-    // ERRORS (prevent form submission)
-    if (control.value && !breakStartTime) {
-      return { incompleteBreakTime: true };
-    }
-
-    if (breakStartTime) {
-      const breakStartMinutes = this.parseTime(breakStartTime);
-      const breakEndMinutes = this.parseTime(control.value);
-
-      if (breakEndMinutes <= breakStartMinutes) {
-        return { breakEndTimeBeforeStart: true };
-      }
-
-      // Break cannot exceed work duration (error)
-      if (startTime && endTime) {
-        const startMinutes = this.parseTime(startTime);
-        const endMinutes = this.parseTime(endTime);
-        const breakDuration = breakEndMinutes - breakStartMinutes;
-        const workDuration = endMinutes - startMinutes;
-
-        if (breakDuration >= workDuration) {
-          return { breakTooLong: true };
-        }
-      }
-    }
-
-    if (startTime && endTime) {
-      const startMinutes = this.parseTime(startTime);
-      const endMinutes = this.parseTime(endTime);
-      const breakEndMinutes = this.parseTime(control.value);
-
-      if (breakEndMinutes <= startMinutes || breakEndMinutes >= endMinutes) {
-        return { breakOutsideWorkHours: true };
-      }
-    }
-
     return null;
   }
 
@@ -343,15 +244,10 @@ export class AddModal implements OnInit {
         timeEntry.endTime = formValue.endTime;
       }
 
-      if (formValue.breakStartTime && formValue.breakEndTime) {
-        const breakStart = this.parseTime(formValue.breakStartTime);
-        const breakEnd = this.parseTime(formValue.breakEndTime);
-        const breakDurationMinutes = breakEnd - breakStart;
-        
+      if (formValue.breakDuration) {
+        const breakDurationMinutes = this.timeStringToMinutes(formValue.breakDuration);
         if (breakDurationMinutes > 0) {
-          const breakHours = Math.floor(breakDurationMinutes / 60);
-          const breakMins = breakDurationMinutes % 60;
-          timeEntry.breakDuration = `${breakHours.toString().padStart(2, '0')}:${breakMins.toString().padStart(2, '0')}`;
+          timeEntry.breakDuration = breakDurationMinutes;
         }
       }
 
@@ -372,39 +268,17 @@ export class AddModal implements OnInit {
     this.dialogRef.close();
   }
 
-  private calculateWorkedTime(startTime: string, endTime: string, breakStartTime: string, breakEndTime: string): string {
-    const start = this.parseTime(startTime);
-    const end = this.parseTime(endTime);
-    const breakStart = this.parseTime(breakStartTime);
-    const breakEnd = this.parseTime(breakEndTime);
+  private calculateWorkedTime(startTime: string, endTime: string, breakMinutes: number): string {
+    const startMinutes = this.timeStringToMinutes(startTime);
+    const endMinutes = this.timeStringToMinutes(endTime);
 
-    const breakDuration = breakEnd - breakStart;
-    
-    if (breakDuration < 0) {
-      return '00:00';
-    }
-
-    const totalMinutes = end - start - breakDuration;
+    const totalMinutes = endMinutes - startMinutes - breakMinutes;
     
     if (totalMinutes < 0) {
       return '00:00';
     }
 
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  }
-
-  private parseTime(timeString: string): number {
-    if (!timeString || !timeString.includes(':')) return 0;
-    
-    const [hours, minutes] = timeString.split(':').map(Number);
-    
-    if (isNaN(hours) || isNaN(minutes)) return 0;
-    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return 0;
-    
-    return hours * 60 + minutes;
+    return this.minutesToTimeString(totalMinutes);
   }
 
   private getCurrentTime(): string {

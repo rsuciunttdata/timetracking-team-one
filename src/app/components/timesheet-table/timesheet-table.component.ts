@@ -104,7 +104,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
           date: date,
           startTime: '',
           endTime: '',
-          breakDuration: '',
+          breakDuration: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
           status: 'placeholder'
@@ -179,7 +179,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     const totalMinutes = realEntries.reduce((total, entry) => {
       // Only calculate worked time if we have both start and end times
       if (entry.startTime && entry.endTime) {
-        const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration || '00:00'); // Fix: provide default
+        const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration || 0);
         const [hours, minutes] = workedTime.split(':').map(Number);
         return total + (hours * 60) + minutes;
       }
@@ -327,14 +327,14 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     }).format(new Date(date));
   }
 
-   calculateWorkedTime(startTime: string, endTime?: string, breakDuration?: string): string {
+   calculateWorkedTime(startTime: string, endTime?: string, breakDuration?: number): string {
     if (!startTime || !endTime) {
       return '00:00'; // Can't calculate without both start and end times
     }
 
     const start = this.parseTime(startTime);
     const end = this.parseTime(endTime);
-    const breakTime = this.parseTime(breakDuration || '00:00');
+    const breakTime = breakDuration || 0; // breakDuration is already in minutes
 
     // Validate time logic
     if (end <= start) {
