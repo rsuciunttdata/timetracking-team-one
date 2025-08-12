@@ -293,29 +293,6 @@ export class TimesheetPageComponent implements OnInit {
     };
   }
 
-  private calculateWorkedTime(startTime: string, endTime: string, breakDuration: string): string {
-    const start = this.parseTime(startTime);
-    const end = this.parseTime(endTime);
-    const breakTime = this.parseTime(breakDuration);
-
-    const totalMinutes = end - start - breakTime;
-
-    if (totalMinutes < 0) {
-      return '0:00';
-    }
-
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  }
-
-  private parseTime(timeString: string): number {
-    if (!timeString) return 0;
-    const [hours, minutes] = timeString.split(':').map(Number);
-    return hours * 60 + minutes;
-  }
-
   onEditEntry(entry: TimeEntry): void {
     const dialogRef = this.dialog.open(EditModal, {
       maxWidth: '100vw',

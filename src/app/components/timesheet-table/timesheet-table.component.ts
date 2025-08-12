@@ -14,6 +14,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { TimeEntry } from '../../interfaces/time-entry.interface';
 import { TimeEntryService } from '../../services/time-entry.service';
 import { ExportService } from '../../services/export.service';
+import { TimeUtil } from '../../utils/time.util';
 
 @Component({
   selector: 'app-timesheet-table',
@@ -179,7 +180,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     const totalMinutes = realEntries.reduce((total, entry) => {
       // Only calculate worked time if we have both start and end times
       if (entry.startTime && entry.endTime) {
-        const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration || 0);
+        const workedTime = TimeUtil.calculateWorkedTimeString(entry.startTime, entry.endTime, entry.breakDuration || 0);
         const [hours, minutes] = workedTime.split(':').map(Number);
         return total + (hours * 60) + minutes;
       }
@@ -332,25 +333,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
       return '00:00'; // Can't calculate without both start and end times
     }
 
-    const start = this.parseTime(startTime);
-    const end = this.parseTime(endTime);
-    const breakTime = breakDuration || 0; // breakDuration is already in minutes
-
-    // Validate time logic
-    if (end <= start) {
-      return '00:00'; // Invalid time range
-    }
-
-    const totalMinutes = end - start - breakTime;
-
-    if (totalMinutes < 0) {
-      return '00:00';
-    }
-
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    return TimeUtil.calculateWorkedTimeString(startTime, endTime, breakDuration || 0);
   }
 
   isPlaceholderEntry(entry: TimeEntry | null): boolean {
@@ -379,12 +362,6 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     }
 
     return dates;
-  }
-
-  private parseTime(timeString: string): number {
-    if (!timeString) return 0;
-    const [hours, minutes] = timeString.split(':').map(Number);
-    return hours * 60 + minutes;
   }
 
   onValidateEntry(entry: TimeEntry) {

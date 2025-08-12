@@ -440,20 +440,9 @@ export class ExportService {
       return '00:00'; // Can't calculate without both start and end times
     }
 
-    const start = this.parseTime(startTime);
-    const end = this.parseTime(endTime);
-    const breakTime = this.parseTime(breakDuration || '00:00'); // Fix: provide default
-
-    const totalMinutes = end - start - breakTime;
-
-    if (totalMinutes < 0) {
-      return '00:00';
-    }
-
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    // Convert string breakDuration to number for TimeUtil.calculateWorkedTimeString
+    const breakMinutes = breakDuration ? TimeUtil.timeStringToMinutes(breakDuration) : 0;
+    return TimeUtil.calculateWorkedTimeString(startTime, endTime, breakMinutes);
   }
 
 
@@ -461,9 +450,7 @@ export class ExportService {
    * Parse time string to minutes
    */
   private parseTime(timeString: string): number {
-    if (!timeString) return 0;
-    const [hours, minutes] = timeString.split(':').map(Number);
-    return hours * 60 + minutes;
+    return TimeUtil.timeStringToMinutes(timeString);
   }
 
   /**
