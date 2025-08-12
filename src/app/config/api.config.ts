@@ -14,7 +14,7 @@ export const API_CONFIG = {
     // User-specific weekly operations  
     USER_WEEKLY_BY_DATE: '/weekly/by-date',
     
-    // Legacy endpoints (keep for backward compatibility)
+    // Legacy endpoints
     TIME_ENTRIES: '/time-entries',
     USERS: '/users',
     AUTH: '/auth',
@@ -29,7 +29,8 @@ export const API_CONFIG = {
   RETRY_DELAY: 1000,
   
   // Simple flags
-  ENABLE_MOCK_DATA: true
+  ENABLE_MOCK_DATA: true,
+  MOCK_AS_FALLBACK_ONLY: true  //false-immediately, true-try real requests first
 } as const;
 
 // Helper function to get full endpoint URL
