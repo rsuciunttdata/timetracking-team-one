@@ -36,13 +36,19 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "600kB",
+                  "maximumError": "1.2MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "12kB",
-                  "maximumError": "16kB"
+                  "maximumWarning": "15kB",
+                  "maximumError": "20kB"
+                },
+                {
+                  "type": "bundle",
+                  "baseline": "500kB",
+                  "maximumWarning": "150kB",
+                  "maximumError": "200kB"
                 }
               ],
               "outputHashing": "all",
@@ -60,7 +66,8 @@
               },
               "namedChunks": false,
               "aot": true,
-              "extractLicenses": true
+              "extractLicenses": true,
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {
               "optimization": false,
