@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { TimeEntry, UpdateTimeEntryRequest, CreateTimeEntryRequest } from '../../../interfaces/time-entry.interface';
 import { TimeEntryService } from '../../../services/time-entry.service';
+import { TimeUtil } from '../../../utils/time.util';
 
 interface EditModalData {
   timeEntry: TimeEntry;
@@ -73,7 +74,8 @@ hasWarnings = computed(() => {
 previewWorkedTime = computed(() => {
   const values = this.formValues();
   if (values.startTime && values.endTime) {
-    return this.calculateWorkedTime(values.startTime, values.endTime, values.breakDuration || '');
+    const breakMinutes = values.breakDuration ? TimeUtil.timeStringToMinutes(values.breakDuration) : 0;
+    return TimeUtil.calculateWorkedTimeString(values.startTime, values.endTime, breakMinutes);
   }
   return '00:00';
 });
@@ -129,7 +131,7 @@ previewWorkedTime = computed(() => {
     // Convert integer breakDuration to string format for display
     let breakDurationString = '';
     if (entry.breakDuration && typeof entry.breakDuration === 'number') {
-      breakDurationString = this.minutesToTime(entry.breakDuration);
+      breakDurationString = TimeUtil.minutesToTimeString(entry.breakDuration);
     }
     
     this.timeEntryForm = this.fb.group({
@@ -175,8 +177,8 @@ previewWorkedTime = computed(() => {
 
     // Check for work day duration warning
     if (values.startTime && values.endTime) {
-      const startMinutes = this.parseTime(values.startTime);
-      const endMinutes = this.parseTime(values.endTime);
+      const startMinutes = TimeUtil.timeStringToMinutes(values.startTime);
+      const endMinutes = TimeUtil.timeStringToMinutes(values.endTime);
       const workDuration = endMinutes - startMinutes;
 
       if (workDuration > 12 * 60) { // > 12 hours
@@ -218,8 +220,8 @@ previewWorkedTime = computed(() => {
       return null;
     }
 
-    const startMinutes = this.parseTime(startTime);
-    const endMinutes = this.parseTime(control.value);
+    const startMinutes = TimeUtil.timeStringToMinutes(startTime);
+    const endMinutes = TimeUtil.timeStringToMinutes(control.value);
 
     // ERRORS (prevent form submission)
     if (endMinutes <= startMinutes) {
@@ -308,7 +310,7 @@ previewWorkedTime = computed(() => {
     // Convert integer breakDuration to string format for the form
     let breakDurationString = '';
     if (entry.breakDuration && typeof entry.breakDuration === 'number') {
-      breakDurationString = this.minutesToTime(entry.breakDuration);
+      breakDurationString = TimeUtil.minutesToTimeString(entry.breakDuration);
     }
     
     this.timeEntryForm.patchValue({
@@ -423,82 +425,6 @@ previewWorkedTime = computed(() => {
 
   private timeStringToMinutes(timeString: string): number {
     if (!timeString || timeString.trim() === '') return 0;
-    return this.parseTime(timeString);
-  }
-
-  private calculateWorkedTime(startTime: string, endTime: string, breakStartTime: string, breakEndTime: string): string;
-  private calculateWorkedTime(startTime: string, endTime: string, breakDuration: string): string;
-  private calculateWorkedTime(startTime: string, endTime: string, breakStartTimeOrDuration: string, breakEndTime?: string): string {
-    // Validate input times
-    if (!startTime || !endTime) {
-      return '00:00';
-    }
-
-    const start = this.parseTime(startTime);
-    const end = this.parseTime(endTime);
-
-    // If parsing failed, return 00:00
-    if (start === 0 && startTime !== '00:00') {
-      return '00:00';
-    }
-    if (end === 0 && endTime !== '00:00') {
-      return '00:00';
-    }
-
-    let breakDurationMinutes = 0;
-
-    if (breakEndTime) {
-      // New format: break start and end times
-      const breakStart = this.parseTime(breakStartTimeOrDuration);
-      const breakEnd = this.parseTime(breakEndTime);
-      breakDurationMinutes = breakEnd - breakStart;
-    } else {
-      // Legacy format: break duration string
-      breakDurationMinutes = this.parseTime(breakStartTimeOrDuration);
-    }
-
-    // Ensure valid break duration
-    if (breakDurationMinutes < 0) {
-      breakDurationMinutes = 0;
-    }
-
-    // Calculate work duration (same day only - overnight deprecated)
-    let totalMinutes = end - start - breakDurationMinutes;
-    
-    // Ensure we don't have negative time
-    if (totalMinutes < 0) {
-      return '00:00';
-    }
-
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  }
-
-  private parseTime(timeString: string): number {
-    // Handle empty or undefined strings
-    if (!timeString || timeString.trim() === '') return 0;
-    
-    // Handle strings that don't contain ':'
-    if (!timeString.includes(':')) return 0;
-    
-    const parts = timeString.split(':');
-    if (parts.length !== 2) return 0;
-    
-    const hours = parseInt(parts[0], 10);
-    const minutes = parseInt(parts[1], 10);
-    
-    // Validate parsed numbers
-    if (isNaN(hours) || isNaN(minutes)) return 0;
-    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return 0;
-    
-    return hours * 60 + minutes;
-  }
-
-  private minutesToTime(totalMinutes: number): string {
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    return TimeUtil.timeStringToMinutes(timeString);
   }
 }

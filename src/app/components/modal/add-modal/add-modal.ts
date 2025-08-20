@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { CreateTimeEntryRequest } from '../../../interfaces/time-entry.interface';
 import { TimeEntryService } from '../../../services/time-entry.service';
+import { TimeUtil } from '../../../utils/time.util';
 
 interface AddModalData {
   prefilledDate?: Date;
@@ -63,8 +64,8 @@ export class AddModal implements OnInit {
   previewWorkedTime = computed(() => {
     const values = this.formValues();
     if (values.startTime && values.endTime) {
-      const breakMinutes = values.breakDuration ? this.timeStringToMinutes(values.breakDuration) : 0;
-      return this.calculateWorkedTime(values.startTime, values.endTime, breakMinutes);
+      const breakMinutes = values.breakDuration ? TimeUtil.timeStringToMinutes(values.breakDuration) : 0;
+      return TimeUtil.calculateWorkedTimeString(values.startTime, values.endTime, breakMinutes);
     }
     return '00:00';
   });
@@ -112,17 +113,7 @@ export class AddModal implements OnInit {
 
   // Helper method to convert time string to minutes
   private timeStringToMinutes(timeString: string): number {
-    if (!timeString || !timeString.includes(':')) return 0;
-    const [hours, minutes] = timeString.split(':').map(Number);
-    if (isNaN(hours) || isNaN(minutes)) return 0;
-    return hours * 60 + minutes;
-  }
-
-  // Helper method to convert minutes to time string
-  private minutesToTimeString(minutes: number): string {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    return TimeUtil.timeStringToMinutes(timeString);
   }
 
   ngOnInit(): void {
@@ -168,8 +159,8 @@ export class AddModal implements OnInit {
 
     // Check for work day duration warning
     if (values.startTime && values.endTime) {
-      const startMinutes = this.timeStringToMinutes(values.startTime);
-      const endMinutes = this.timeStringToMinutes(values.endTime);
+      const startMinutes = TimeUtil.timeStringToMinutes(values.startTime);
+      const endMinutes = TimeUtil.timeStringToMinutes(values.endTime);
       const workDuration = endMinutes - startMinutes;
 
       if (workDuration > 12 * 60) { // > 12 hours
@@ -181,7 +172,7 @@ export class AddModal implements OnInit {
 
     // Check for break duration warning
     if (values.breakDuration) {
-      const breakMinutes = this.timeStringToMinutes(values.breakDuration);
+      const breakMinutes = TimeUtil.timeStringToMinutes(values.breakDuration);
 
       if (breakMinutes > 4 * 60) { // > 4 hours
         warnings['breakDuration'] = ['Break duration is unusually long (>4 hours)'];
@@ -211,8 +202,8 @@ export class AddModal implements OnInit {
       return null;
     }
 
-    const startMinutes = this.timeStringToMinutes(startTime);
-    const endMinutes = this.timeStringToMinutes(control.value);
+    const startMinutes = TimeUtil.timeStringToMinutes(startTime);
+    const endMinutes = TimeUtil.timeStringToMinutes(control.value);
 
     // ERRORS (prevent form submission)
     if (endMinutes <= startMinutes) {
@@ -266,19 +257,6 @@ export class AddModal implements OnInit {
 
   onCancel(): void {
     this.dialogRef.close();
-  }
-
-  private calculateWorkedTime(startTime: string, endTime: string, breakMinutes: number): string {
-    const startMinutes = this.timeStringToMinutes(startTime);
-    const endMinutes = this.timeStringToMinutes(endTime);
-
-    const totalMinutes = endMinutes - startMinutes - breakMinutes;
-    
-    if (totalMinutes < 0) {
-      return '00:00';
-    }
-
-    return this.minutesToTimeString(totalMinutes);
   }
 
   private getCurrentTime(): string {
