@@ -3,6 +3,7 @@
 # ⏱️ TimeTracker App
 
 A modern time tracking web application built with **Angular 20**, **Angular Material**, and **Tailwind CSS**. Manage your productivity with an intuitive UI.
+Designed to manage productivity through efficient time entry management and validation workflows.
 
 ---
 
@@ -18,11 +19,21 @@ A modern time tracking web application built with **Angular 20**, **Angular Mate
 
 ## 🚀 Features
 
-to be completed...
+### For Users
+- ⌛ Create, edit, and delete your time entries
+- 📤 Submit entries for admin validation
+- 📅 Track working hours, breaks, and daily totals
+- 📄 View entry status: Draft, Submitted, Approved, Rejected
+- 📈 See summary data for the current week or month
+
+### For Admins
+- ✅ Approve or reject submitted entries
+- 🕵️ Review daily/weekly logs for all users
+- 🗃️ Filter and sort entries by user, status, and date
+- 📄 Export entries to excel
+- 📊 Analytics and reports module (coming soon)
 
 ---
-
-## 📦 Installation
 
 ### Prerequisites
 
@@ -31,3 +42,22 @@ to be completed...
 - Angular CLI `v20+`
 
 ### Clone the Repository
+
+## 🧑‍💻 Authors
+
+- **Andrei Calin Pavel** – [@calinpavel](https://github.com/PavelAC)
+- **Tudor Ovidiu Atodiresei** - [@tudoratodiresei](https://github.com/Tudor-debug819)
+
+---
+
+## 🌐 Live Demo
+
+> [TimeTracker](https://timetracking-team-one.vercel.app/)
+
+**until full release use link:**
+
+- for login:
+    [TimeTracker](https://timetracking-team-one.vercel.app/login)
+
+- if loged in:
+    [TimeTracker](https://timetracking-team-one.vercel.app/timesheet)
