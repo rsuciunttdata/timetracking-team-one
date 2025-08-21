@@ -59,7 +59,10 @@ export class EmployerDashboard {
       .getAllTimeEntries({ page: 1, pageSize: 100 }, { userId })
       .pipe(finalize(() => this.loading.set(false)))     // <— STOP indiferent de rezultat
       .subscribe({
-        next: (res) => this.entries.set(res.data ?? []),
+        next: (res) => {
+          const forApproval = (res.data ?? []).filter(e => e.userId === userId && e.status === 'send_for_validation');
+          this.entries.set(forApproval);
+        },
         error: (err) => {
           console.error('Failed to load entries:', err);
         }
