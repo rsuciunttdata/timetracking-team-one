@@ -17,6 +17,7 @@ import { AddModal } from '../components/modal/add-modal/add-modal';
 import { EditModal } from '../components/modal/edit-modal/edit-modal';
 import { TimeEntryService } from '../../app/services/time-entry.service';
 import { TimeEntry, TimeEntryFilter } from '../interfaces/time-entry.interface';
+import { TimeUtil } from '../utils/time.util';
 
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
@@ -57,7 +58,7 @@ export class TimesheetPageComponent implements OnInit {
   private startDateSignal = signal<Date | null>(null);
   private endDateSignal = signal<Date | null>(null);
   private summaryDataSignal = signal<{ totalEntries: number; totalHours: string }>({ totalEntries: 0, totalHours: '0:00' });
-  private allTimeEntriesSignal = signal<TimeEntry[]>([]);
+  protected allTimeEntriesSignal = signal<TimeEntry[]>([]);
 
   // Computed signals for summary cards
   todaySummary = computed(() => {
@@ -282,9 +283,12 @@ export class TimesheetPageComponent implements OnInit {
     const totalMinutes = filteredEntries.reduce((total, entry) => {
       if (!entry.startTime || !entry.endTime) return total;
 
-      const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration || '0:00');
-      const [hours, minutes] = workedTime.split(':').map(Number);
-      return total + (hours * 60) + minutes;
+      const workedMinutes = TimeUtil.calculateWorkedMinutes(
+        TimeUtil.timeStringToMinutes(entry.startTime),
+        TimeUtil.timeStringToMinutes(entry.endTime),
+        entry.breakDuration || 0
+      );
+      return total + workedMinutes;
     }, 0);
 
     const totalHours = Math.floor(totalMinutes / 60);
@@ -295,29 +299,6 @@ export class TimesheetPageComponent implements OnInit {
       entries: filteredEntries.length,
       hours: hoursFormatted
     };
-  }
-
-  private calculateWorkedTime(startTime: string, endTime: string, breakDuration: string): string {
-    const start = this.parseTime(startTime);
-    const end = this.parseTime(endTime);
-    const breakTime = this.parseTime(breakDuration);
-
-    const totalMinutes = end - start - breakTime;
-
-    if (totalMinutes < 0) {
-      return '0:00';
-    }
-
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  }
-
-  private parseTime(timeString: string): number {
-    if (!timeString) return 0;
-    const [hours, minutes] = timeString.split(':').map(Number);
-    return hours * 60 + minutes;
   }
 
   onEditEntry(entry: TimeEntry): void {

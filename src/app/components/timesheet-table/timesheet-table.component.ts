@@ -14,6 +14,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { TimeEntry } from '../../interfaces/time-entry.interface';
 import { TimeEntryService } from '../../services/time-entry.service';
 import { ExportService } from '../../services/export.service';
+import { TimeUtil } from '../../utils/time.util';
 
 @Component({
   selector: 'app-timesheet-table',
@@ -106,7 +107,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
           date: date,
           startTime: '',
           endTime: '',
-          breakDuration: '',
+          breakDuration: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
           status: 'placeholder'
@@ -173,16 +174,19 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   currentPageIndex = computed(() => this.pageState().pageIndex);
 
   // Summary data computed signal
-  summaryInfo = computed(() => {
+ summaryInfo = computed(() => {
     const entries = this.filteredEntries();
     const realEntries = entries.filter(entry => !this.isPlaceholderEntry(entry));
     const totalEntries = realEntries.length;
 
     const totalMinutes = realEntries.reduce((total, entry) => {
-
-      const workedTime = this.calculateWorkedTime(entry.startTime, entry.endTime, entry.breakDuration);
-      const [hours, minutes] = workedTime.split(':').map(Number);
-      return total + (hours * 60) + minutes;
+      // Only calculate worked time if we have both start and end times
+      if (entry.startTime && entry.endTime) {
+        const workedTime = TimeUtil.calculateWorkedTimeString(entry.startTime, entry.endTime, entry.breakDuration || 0);
+        const [hours, minutes] = workedTime.split(':').map(Number);
+        return total + (hours * 60) + minutes;
+      }
+      return total;
     }, 0);
 
     const totalHours = Math.floor(totalMinutes / 60);
@@ -337,21 +341,12 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     }).format(new Date(date));
   }
 
-  calculateWorkedTime(startTime: string, endTime: string, breakDuration: string): string {
-    const start = this.parseTime(startTime);
-    const end = this.parseTime(endTime);
-    const breakTime = this.parseTime(breakDuration);
-
-    const totalMinutes = end - start - breakTime;
-
-    if (totalMinutes < 0) {
-      return '00:00';
+   calculateWorkedTime(startTime: string, endTime?: string, breakDuration?: number): string {
+    if (!startTime || !endTime) {
+      return '00:00'; // Can't calculate without both start and end times
     }
 
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    return TimeUtil.calculateWorkedTimeString(startTime, endTime, breakDuration || 0);
   }
 
   isPlaceholderEntry(entry: TimeEntry | null): boolean {
@@ -380,12 +375,6 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
     }
 
     return dates;
-  }
-
-  private parseTime(timeString: string): number {
-    if (!timeString) return 0;
-    const [hours, minutes] = timeString.split(':').map(Number);
-    return hours * 60 + minutes;
   }
 
   onValidateEntry(entry: TimeEntry) {
