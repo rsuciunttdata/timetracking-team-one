@@ -1,4 +1,4 @@
-import { Component, signal, effect } from '@angular/core';
+import { Component, signal, effect, computed } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatOptionModule } from '@angular/material/core';
 import { TimesheetTableComponent } from '../../components/timesheet-table/timesheet-table.component';
@@ -12,10 +12,12 @@ import { Router } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { UserService, AppUser } from '../../services/user.service';
 import { RouterModule } from '@angular/router';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-employer-dashboard',
-  imports: [MatFormFieldModule, MatOptionModule, TimesheetTableComponent, CommonModule, MatSelectModule, MatIconModule, MatToolbarModule, RouterModule],
+  imports: [MatFormFieldModule, MatOptionModule, TimesheetTableComponent, CommonModule, MatSelectModule, MatIconModule, MatToolbarModule, RouterModule, MatProgressSpinnerModule],
   templateUrl: './employer-dashboard.html',
   styleUrl: './employer-dashboard.css'
 })
@@ -26,6 +28,8 @@ export class EmployerDashboard {
 
   selectedUserId = signal<string | null>(null);
   entries = signal<TimeEntry[]>([]);
+  private loading = signal<boolean>(false);
+  isLoading = computed(() => this.loading());
 
   constructor(private timeEntryService: TimeEntryService, private router: Router, private authService: AuthService, private userService: UserService) {
     this.userService.getUsers().subscribe(users => {
@@ -50,10 +54,16 @@ export class EmployerDashboard {
   }
 
   loadEntries(userId: string) {
-    this.timeEntryService.getAllTimeEntries({ page: 1, pageSize: 100 }).subscribe(res => {
-      const filtered = res.data.filter(entry => entry.userId === userId);
-      this.entries.set(filtered);
-    });
+    this.loading.set(true);
+    this.timeEntryService
+      .getAllTimeEntries({ page: 1, pageSize: 100 }, { userId })
+      .pipe(finalize(() => this.loading.set(false)))     // <— STOP indiferent de rezultat
+      .subscribe({
+        next: (res) => this.entries.set(res.data ?? []),
+        error: (err) => {
+          console.error('Failed to load entries:', err);
+        }
+      });
   }
 
   onValidate(entry: TimeEntry): void {
