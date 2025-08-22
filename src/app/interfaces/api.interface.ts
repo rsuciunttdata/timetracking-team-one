@@ -42,5 +42,35 @@ export interface DateRange {
 
 export interface LoginResponse {
   success: boolean;
+  accessToken?: string;
+  refreshToken?: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    role: 'admin' | 'user';
+  };
+  expiresIn?: number; // seconds
   errorCode?: 'invalid_email' | 'invalid_password';
+}
+
+export interface RefreshTokenResponse {
+  success: boolean;
+  accessToken: string;
+  expiresIn: number;
+  errorCode?: 'invalid_token' | 'token_expired';
+}
+
+export interface TokenPayload {
+  sub: string; // User ID
+  email: string;
+  role: 'admin' | 'user';
+  iat: number; // Issued at
+  exp: number; // Expires at
+}
+
+export interface SessionConfig {
+  sessionTimeoutMinutes: number;
+  refreshThresholdMinutes: number;
+  warningMinutes: number;
 }
