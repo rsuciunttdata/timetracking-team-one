@@ -221,22 +221,17 @@ export class TimeEntryService {
    * Get user context helper methods
    */
   private getCurrentUserId(): string | null {
-    console.log('🔍 TimeEntryService: Getting current user ID from AuthService');
     const userId = this.authService.getUserId();
-    console.log('👤 TimeEntryService: Current user ID:', userId);
     return userId;
   }
 
   private getCurrentUserRole(): string | null {
-    console.log('🔍 TimeEntryService: Getting current user role from AuthService');
     const role = this.authService.getUserRole();
-    console.log('🎭 TimeEntryService: Current user role:', role);
     return role;
   }
 
   private isAdmin(): boolean {
     const isAdmin = this.getCurrentUserRole() === 'admin';
-    console.log('🛡️ TimeEntryService: Is admin check:', isAdmin);
     return isAdmin;
   }
 

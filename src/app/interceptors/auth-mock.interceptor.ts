@@ -8,63 +8,48 @@ import { User } from '../interfaces/user.interface';
 import { TokenService } from '../services/token.service';
 
 export const authMockInterceptor: HttpInterceptorFn = (req, next) => {
-    console.log('🔍 Interceptor: Checking request', { url: req.url, method: req.method });
-
     const tokenService = inject(TokenService);
     const http = inject(HttpClient);
 
     if (!API_CONFIG.ENABLE_MOCK_DATA) {
-        console.log('⚠️ Interceptor: Mock data disabled, passing through');
         return next(req);
     }
 
     const isAuthEndpoint = req.url.includes('/auth/');
     
-    console.log('🎯 Interceptor: Auth endpoint check', { isAuthEndpoint, url: req.url });
-    
     if (!isAuthEndpoint) {
         return next(req);
     }
 
-    console.log('🚀 Interceptor: Processing auth request', { fallbackOnly: API_CONFIG.MOCK_AS_FALLBACK_ONLY });
-
     if (API_CONFIG.MOCK_AS_FALLBACK_ONLY) {
         return next(req).pipe(
             catchError(error => {
-                console.log('💥 Interceptor: Real auth request failed, falling back to mock data:', error);
                 return handleMockFallback(req, tokenService, http);
             })
         );
     }
 
-    console.log('🎭 Interceptor: Using mock data immediately');
     return handleMockFallback(req, tokenService, http);
 };
 
 function handleMockFallback(req: any, tokenService: TokenService, http: HttpClient): Observable<HttpResponse<any>> {
-    console.log('🎭 Mock Fallback: Handling request', { url: req.url, method: req.method });
     
     if (req.url.includes('/auth/login') && req.method === 'POST') {
-        console.log('📋 Mock Fallback: Routing to mock login');
         return handleMockLogin(req, tokenService, http);
     }
     
     if (req.url.includes('/auth/refresh') && req.method === 'POST') {
-        console.log('🔄 Mock Fallback: Routing to mock refresh');
         return handleMockRefresh(req, tokenService, http);
     }
     
     if (req.url.includes('/auth/logout') && req.method === 'POST') {
-        console.log('👋 Mock Fallback: Routing to mock logout');
         return handleMockLogout(req);
     }
     
     if (req.url.includes('/auth/validate') && req.method === 'GET') {
-        console.log('✅ Mock Fallback: Routing to mock validate');
         return handleMockValidate(req, http);
     }
 
-    console.log('❓ Mock Fallback: Unknown endpoint, returning 404');
     return of(new HttpResponse({ status: 404, body: { error: 'Endpoint not found' } }));
 }
 
@@ -75,34 +60,19 @@ let cachedUsers: User[] | null = null;
  */
 function loadMockUsers(http: HttpClient): Observable<User[]> {
     if (cachedUsers) {
-        console.log('📋 Mock Data: Using cached users', cachedUsers.length, 'users');
         return of(cachedUsers);
     }
     
-    console.log('📋 Mock Data: Loading users from JSON file...');
-    console.log('📋 Mock Data: Attempting to GET /assets/users.json');
-    
     return http.get<User[]>('/assets/users.json').pipe(
         map(users => {
-            console.log('📋 Mock Data: HTTP request successful!');
-            console.log('📋 Mock Data: Raw response:', users);
-            console.log('📋 Mock Data: Response type:', typeof users);
-            console.log('📋 Mock Data: Is array:', Array.isArray(users));
-            
             if (!Array.isArray(users)) {
                 throw new Error('Response is not an array');
             }
             
             cachedUsers = users;
-            console.log('📋 Mock Data: Successfully loaded and cached', users.length, 'users');
-            console.log('📋 Mock Data: First user email:', users[0]?.email);
             return users;
         }),
         catchError(error => {
-            console.error('❌ Mock Data: HTTP request failed:', error);
-            console.error('❌ Mock Data: Error status:', error.status);
-            console.error('❌ Mock Data: Error message:', error.message);
-            console.error('❌ Mock Data: Error url:', error.url);
             return throwError(() => new Error(`Failed to load mock user data from users.json: ${error.message || error.status || 'Unknown error'}`));
         })
     );
@@ -113,22 +83,11 @@ function handleMockLogin(req: any, tokenService: TokenService, http: HttpClient)
     const email = body?.email?.trim().toLowerCase();
     const password = body?.password;
 
-    console.log('🎭 Mock Login: Processing login request');
-    console.log('📧 Email received:', email);
-    console.log('🔑 Password received:', password ? '[PROVIDED]' : '[MISSING]');
-    console.log('🔧 Mock Login: About to load users...');
-
     return loadMockUsers(http).pipe(
         switchMap(users => {
-            console.log('✅ Mock Login: Users loaded successfully, count:', users.length);
-            console.log('👥 Available users:', users.map(u => ({ email: u.email, role: u.role })));
-
             const user = users.find(u => u.email.toLowerCase() === email);
             
-            console.log('🔍 User found:', user ? `${user.name} (${user.role})` : 'NO USER FOUND');
-            
             if (!user) {
-                console.log('❌ Mock Login: Invalid email');
                 const response: LoginResponse = { 
                     success: false, 
                     errorCode: 'invalid_email'
@@ -137,7 +96,6 @@ function handleMockLogin(req: any, tokenService: TokenService, http: HttpClient)
             }
             
             if (user.password !== password) {
-                console.log('❌ Mock Login: Invalid password');
                 const response: LoginResponse = { 
                     success: false, 
                     errorCode: 'invalid_password'
@@ -145,10 +103,7 @@ function handleMockLogin(req: any, tokenService: TokenService, http: HttpClient)
                 return of(new HttpResponse({ status: 401, body: response }));
             }
 
-            console.log('✅ Mock Login: Authentication successful');
-
             const expiresIn = tokenService.getTokenExpirationSeconds();
-            console.log('⏰ Mock Login: Using expiration from TokenService:', expiresIn, 'seconds');
             const now = Math.floor(Date.now() / 1000);
             
             const tokenPayload = {
@@ -179,16 +134,9 @@ function handleMockLogin(req: any, tokenService: TokenService, http: HttpClient)
                 expiresIn
             };
 
-            console.log('🎭 Mock Login: Returning successful response', { user: user.email, role: user.role, expiresIn });
             return of(new HttpResponse({ status: 200, body: response }));
         }),
         catchError(error => {
-            console.error('❌ Mock Login: ERROR occurred during user loading or processing:', error);
-            console.error('❌ Mock Login: Error details:', {
-                message: error.message,
-                stack: error.stack,
-                type: typeof error
-            });
             const response: LoginResponse = { 
                 success: false, 
                 errorCode: 'invalid_email'
@@ -214,7 +162,6 @@ function handleMockRefresh(req: any, tokenService: TokenService, http: HttpClien
     }
 
     const expiresIn = tokenService.getTokenExpirationSeconds();
-    console.log('⏰ Mock Refresh: Using expiration from TokenService:', expiresIn, 'seconds');
 
     return loadMockUsers(http).pipe(
         switchMap(users => {
@@ -254,11 +201,9 @@ function handleMockRefresh(req: any, tokenService: TokenService, http: HttpClien
                 expiresIn
             };
 
-            console.log('🔄 Mock Refresh: Returning refreshed token', { expiresIn });
             return of(new HttpResponse({ status: 200, body: response }));
         }),
         catchError(error => {
-            console.error('❌ Mock Refresh: Failed to load user data:', error);
             const response: RefreshTokenResponse = {
                 success: false,
                 accessToken: '',
@@ -321,7 +266,6 @@ function handleMockValidate(req: any, http: HttpClient): Observable<HttpResponse
                 return of(new HttpResponse({ status: 200, body: response }));
             }),
             catchError(error => {
-                console.error('❌ Mock Validate: Failed to load user data:', error);
                 const response = { valid: false };
                 return of(new HttpResponse({ status: 503, body: response }));
             }),

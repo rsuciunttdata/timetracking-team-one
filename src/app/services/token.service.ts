@@ -44,8 +44,6 @@ export class TokenService {
 
     localStorage.setItem(this.TOKEN_KEY, btoa(JSON.stringify(tokenStorage)));
     this.updateLastActivity();
-    
-    console.log('Tokens stored successfully');
   }
 
   /**
@@ -75,7 +73,6 @@ export class TokenService {
     localStorage.removeItem(this.ACTIVITY_KEY);
     this.tokenExpiredSubject.next(false);
     this.sessionWarningSubject.next({ show: false, timeRemaining: 0 });
-    console.log('Tokens cleared');
   }
 
   /**
@@ -185,7 +182,6 @@ export class TokenService {
     
     timer(timeUntilRefresh * 1000).subscribe(() => {
       if (this.shouldRefreshToken()) {
-        console.log('Auto-refreshing token...');
         refreshCallback().subscribe({
           next: (response) => {
             if (response.success) {
@@ -278,19 +274,10 @@ export class TokenService {
     const token = this.getAccessToken();
     
     if (!token) {
-      console.log('No token found in checkSessionStatus');
       return;
     }
 
-    console.log('Checking session status...', {
-      hasToken: !!token,
-      isSessionTimedOut: this.isSessionTimedOut(),
-      timeUntilExpiry: this.getTimeUntilExpiry(token),
-      lastActivity: this.getLastActivity()
-    });
-
     if (this.isSessionTimedOut()) {
-      console.log('Session timed out due to inactivity');
       this.handleSessionTimeout();
       return;
     }
@@ -298,20 +285,12 @@ export class TokenService {
     const timeUntilExpiry = this.getTimeUntilExpiry(token);
     const warningThreshold = this.sessionConfig.warningMinutes * 60;
 
-    console.log('Session check:', {
-      timeUntilExpiry,
-      warningThreshold,
-      shouldShowWarning: timeUntilExpiry > 0 && timeUntilExpiry <= warningThreshold
-    });
-
     if (timeUntilExpiry > 0 && timeUntilExpiry <= warningThreshold) {
-      console.log('Showing session warning:', timeUntilExpiry, 'seconds remaining');
       this.sessionWarningSubject.next({ 
         show: true, 
         timeRemaining: timeUntilExpiry 
       });
     } else if (timeUntilExpiry <= 0) {
-      console.log('Token expired, handling expiry');
       this.handleTokenExpiry();
     } else {
       this.sessionWarningSubject.next({ show: false, timeRemaining: 0 });
@@ -319,13 +298,11 @@ export class TokenService {
   }
 
   private handleTokenExpiry(): void {
-    console.log('🔴 Token expired - triggering auth error');
     this.tokenExpiredSubject.next(true);
     this.clearTokens();
   }
 
   private handleSessionTimeout(): void {
-    console.log('🔴 Session timeout - triggering auth error');
     this.tokenExpiredSubject.next(true);
     this.clearTokens();
   }

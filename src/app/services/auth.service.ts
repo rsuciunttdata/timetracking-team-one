@@ -42,11 +42,9 @@ export class AuthService {
    * Login with email and password
    */
   login(email: string, password: string): Observable<'admin' | 'user' | 'invalid_email' | 'invalid_password'> {
-    console.log('🚀 AuthService: Making login request to backend API');
     
     return this.backendApi.login(email, password).pipe(
       switchMap(response => {
-        console.log('📥 AuthService: Received login response:', { success: response.success, hasToken: !!response.accessToken });
         
         if (!response.success) {
           return of(response.errorCode || 'invalid_email' as const);
@@ -73,7 +71,6 @@ export class AuthService {
           // Schedule automatic token refresh
           // this.tokenService.scheduleTokenRefresh(() => this.refreshToken());
 
-          console.log('✅ AuthService: Login successful, user role:', response.user.role);
           return of(response.user.role as 'admin' | 'user');
         }
 
@@ -122,21 +119,17 @@ export class AuthService {
    */
   logout(): void {
     const refreshToken = this.tokenService.getRefreshToken();
-    
-    // Clear tokens immediately
+
     this.tokenService.clearTokens();
     this.updateAuthState(null, null);
     this.router.navigate(['/login']);
-    
-    // Notify backend to invalidate tokens (optional, runs in background)
+ 
     if (refreshToken) {
       this.backendApi.logout(refreshToken).subscribe({
-        next: () => console.log('Logout successful on backend'),
+        next: () => {},
         error: (error) => console.warn('Backend logout failed:', error)
       });
     }
-    
-    console.log('User logged out');
   }
 
   /**
@@ -146,7 +139,6 @@ export class AuthService {
     const token = this.tokenService.getAccessToken();
     const isValid = token ? this.tokenService.isTokenValid(token) : false;
     
-    // Update reactive state
     this.isLoggedIn.set(isValid);
     
     return isValid;
@@ -192,7 +184,6 @@ export class AuthService {
 
     this.tokenService.updateLastActivity();
     
-    // If token needs refresh, do it now
     if (this.tokenService.shouldRefreshToken()) {
       return this.refreshToken().pipe(
         map(response => response.success),
@@ -206,7 +197,6 @@ export class AuthService {
   // ===== PRIVATE HELPER METHODS =====
 
   private initializeAuthState(): void {
-    // Check if there's a valid token on app start
     const token = this.tokenService.getAccessToken();
     
     if (token && this.tokenService.isTokenValid(token)) {
@@ -226,11 +216,9 @@ export class AuthService {
   }
 
   private setupTokenMonitoring(): void {
-    console.log('🟢 Setting up token monitoring...');
     
     // Listen for token expiration
     this.tokenService.tokenExpired$.subscribe(expired => {
-      console.log('🔴 Token expired event received:', expired);
       if (expired) {
         this.handleAuthError('token_expired');
       }
@@ -238,9 +226,7 @@ export class AuthService {
 
     // Listen for session warnings
     this.tokenService.sessionWarning$.subscribe(warning => {
-      console.log('🟡 Session warning event received:', warning);
       if (warning.show) {
-        // For simplicity, we'll just show the session expired dialog
         this.handleAuthError('token_expired');
       }
     });
@@ -263,18 +249,13 @@ export class AuthService {
   }
 
   private handleAuthError(error: AuthError): void {
-    console.log('🔴 Auth error triggered:', error);
-
-    console.log('📱 Opening session expired dialog');
 
     const dialogRef = this.dialog.open(SessionExpiredComponent, {
       disableClose: true,
       width: '400px'
     });
 
-    // The component will handle redirect to login automatically
     dialogRef.afterClosed().subscribe(() => {
-      // Ensure logout happens regardless of how dialog is closed
       this.logout();
     });
   }

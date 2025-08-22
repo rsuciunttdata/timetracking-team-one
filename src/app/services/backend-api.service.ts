@@ -37,17 +37,13 @@ export class BackendApiService {
     const endpoint = `${this.baseUrl}/auth/login`;
     const payload = { email, password };
 
-    console.log('🌐 BackendAPI: Sending login request to:', endpoint);
-
     return this.http.post<LoginResponse>(endpoint, payload, {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       })
     }).pipe(
-      tap((response: LoginResponse) => console.log('📡 BackendAPI: Login response received:', { success: response.success })),
       catchError(error => {
-        console.log('💥 BackendAPI: Login request failed, error will be handled by interceptor');
         return this.handleError('login', error);
       })
     );

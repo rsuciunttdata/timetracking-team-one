@@ -209,11 +209,6 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   ngOnChanges(): void {
     if (this.dateFilter) {
       this.dateFilterSignal.set(this.dateFilter);
-      // Reload data when date filter changes
-      if (this._entries().length === 0) {
-        this.loadTimeEntries(); // doar dacă nu am primit entries
-      }
-      //this.loadTimeEntries();
       // Reset pagination to first page after data loads
       setTimeout(() => {
         const currentPageSize = this.pageState().pageSize;
@@ -224,9 +219,7 @@ export class TimesheetTableComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    if (this._entries().length === 0) {
-      this.loadTimeEntries(); // doar pentru user
-    }
+    this.summaryInfo();
   }
 
   private loadTimeEntries(): void {
