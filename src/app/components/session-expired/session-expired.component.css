@@ -1,0 +1,53 @@
+.session-dialog {
+  padding: 24px;
+  max-width: 400px;
+  text-align: center;
+}
+
+.dialog-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dialog-header mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+}
+
+.error-icon {
+  color: #f44336;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  color: #333;
+}
+
+.dialog-content {
+  margin-bottom: 24px;
+}
+
+.dialog-content p {
+  margin: 0 0 12px 0;
+  color: #666;
+  line-height: 1.5;
+}
+
+.dialog-content p:last-child {
+  margin-bottom: 0;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.dialog-actions button {
+  min-width: 140px;
+}
