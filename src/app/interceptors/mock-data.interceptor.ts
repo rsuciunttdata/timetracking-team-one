@@ -79,7 +79,6 @@ export const mockDataInterceptorFn: HttpInterceptorFn = (req, next) => {
 };
 
 function handleMockRequest(req: any): Observable<any> {
-  // Return an observable that loads mock data first
   return new Observable(observer => {
     loadMockData()
       .then(() => {
@@ -116,12 +115,12 @@ function handleMockRequest(req: any): Observable<any> {
 
 function routeRequest(req: any): ApiResponse<any> {
   const { method, url } = req;
-  
+
   // Route based on URL patterns (simplified)
   if (url.includes('/monthly/by-date/') || url.includes('/weekly/by-date/')) {
     return handleUserTimeEntries(req);
   }
-  
+
   if (url.includes('/daily/by-date/') || url.includes('/time-entries')) {
     return handleTimeEntriesRequest(req);
   }
@@ -133,7 +132,7 @@ function routeRequest(req: any): ApiResponse<any> {
   if (url.includes('/health')) {
     return createSuccessResponse({ status: 'healthy', timestamp: new Date().toISOString() });
   }
-  
+
   return createErrorResponse('Endpoint not found', 404);
 }
 
@@ -155,7 +154,7 @@ function handleUserTimeEntries(req: any): ApiResponse<any> {
 
   // Extract requested userId from URL if present
   const urlParts = req.url.split('/');
-  const requestedUserId = urlParts.find((part: string, index: number) => 
+  const requestedUserId = urlParts.find((part: string, index: number) =>
     urlParts[index + 1] === 'monthly' || urlParts[index + 1] === 'weekly'
   );
 
@@ -164,10 +163,10 @@ function handleUserTimeEntries(req: any): ApiResponse<any> {
     return createErrorResponse('Access denied', 403);
   }
 
-  const userEntries = mockTimeEntries.filter(entry => 
+  const userEntries = mockTimeEntries.filter(entry =>
     entry.userId === (requestedUserId || currentUserId)
   );
-  
+
   return createSuccessResponse(userEntries);
 }
 
@@ -177,8 +176,10 @@ function handleTimeEntriesRequest(req: any): ApiResponse<any> {
     return createErrorResponse('User not authenticated', 401);
   }
 
+
   if (!mockTimeEntries) {
     return createErrorResponse('Mock data not loaded', 500);
+
   }
 
   switch (req.method) {
@@ -218,7 +219,6 @@ function handleAdminRequests(req: any): ApiResponse<any> {
 
 function handleGetEntries(req: any): ApiResponse<any> {
   const currentUserId = getCurrentUserId()!;
-  
   if (!mockTimeEntries) {
     return createErrorResponse('Mock data not loaded', 500);
   }
@@ -272,7 +272,7 @@ function handleCreateEntry(req: any): ApiResponse<TimeEntry> {
 function handleUpdateEntry(req: any): ApiResponse<TimeEntry> {
   const requestData = req.body;
   const entryId = requestData.id || getIdFromUrl(req.url);
-  
+
   if (!entryId) {
     return createErrorResponse('Entry ID required', 400);
   }
@@ -287,7 +287,7 @@ function handleUpdateEntry(req: any): ApiResponse<TimeEntry> {
   }
 
   const existingEntry = mockTimeEntries[entryIndex];
-  
+
   // Validate permissions
   if (!isAdmin() && existingEntry.userId !== getCurrentUserId()) {
     return createErrorResponse('Access denied', 403);
@@ -324,7 +324,7 @@ function handleDeleteEntry(req: any): ApiResponse<any> {
     const urlParts = req.url.split('/');
     const dateIndex = urlParts.findIndex((part: string) => part === 'by-date') + 1;
     const dateString = urlParts[dateIndex];
-    
+
     if (!dateString) {
       return createErrorResponse('Date required for daily delete', 400);
     }
@@ -341,13 +341,13 @@ function handleDeleteEntry(req: any): ApiResponse<any> {
 
     const deletedEntry = mockTimeEntries[entryIndex];
     mockTimeEntries.splice(entryIndex, 1);
-    
+
     return createSuccessResponse({ message: 'Entry deleted successfully', deletedId: deletedEntry.id });
   }
-  
+
   // For regular time-entries endpoint, delete by ID
   const entryId = getIdFromUrl(req.url);
-  
+
   if (!entryId) {
     return createErrorResponse('Entry ID required', 400);
   }
@@ -358,7 +358,7 @@ function handleDeleteEntry(req: any): ApiResponse<any> {
   }
 
   const existingEntry = mockTimeEntries[entryIndex];
-  
+
   // Validate permissions
   if (!isAdmin() && existingEntry.userId !== currentUserId) {
     return createErrorResponse('Access denied', 403);
@@ -395,7 +395,7 @@ function generateId(): string {
 
 function calculateStatus(startTime: string, endTime?: string, breakDuration?: number): EntryStatus {
   if (!startTime || !endTime) return 'completed_partially';
-  
+
   const parseTime = (time: string): number => {
     const [h, m] = time.split(':').map(Number);
     return h * 60 + m;

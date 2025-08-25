@@ -28,7 +28,7 @@ export const routes: Routes = [
   {
     path: 'employer-dashboard',
     canActivate: [authGuard],
-    data: { role: 'admin' },
+    data: { role: ['admin'] },
     loadComponent: () => import('./pages/employer-dashboard/employer-dashboard').then(m => m.EmployerDashboard),
 
   },

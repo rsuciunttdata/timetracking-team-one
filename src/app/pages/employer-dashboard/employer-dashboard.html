@@ -8,7 +8,17 @@
     Hi, <span class="font-medium capitalize">{{ username}}</span>!
   </div>
 
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-6 font-medium capitalize">
+    <a mat-button routerLink="/timesheet" routerLinkActive="active-link">
+      My Timesheet
+    </a>
+    <a mat-button routerLink="/employer-dashboard" routerLinkActive="active-link">
+      Employer Dashboard
+    </a>
+  </div>
+
+
+  <div class="flex items-center gap-6">
     <button mat-icon-button (click)="onLogout()" aria-label="Logout">
       <mat-icon>logout</mat-icon>
     </button>
@@ -43,6 +53,14 @@
   <div *ngIf="selectedUserId()">
     <ng-container *ngIf="entries() as userEntries">
 
+      @if (isLoading()) {
+      <div class="flex justify-center items-center py-16">
+        <div class="flex flex-col items-center gap-4">
+          <mat-spinner diameter="40"></mat-spinner>
+          <span class="text-gray-600 text-sm">Loading time entries...</span>
+        </div>
+      </div>
+      } @else {
       <!-- TABEL: doar când avem date -->
       <app-timesheet-table *ngIf="userEntries.length > 0" [entries]="userEntries" [isAdmin]="true"
         (validateEntry)="onValidate($event)" (requestEditEntry)="onRequestEdit($event)">
@@ -52,7 +70,9 @@
       <div *ngIf="userEntries.length === 0" class="text-center text-gray-500 mt-6">
         No time entries for this user.
       </div>
+      }
 
     </ng-container>
   </div>
+
 </div>
