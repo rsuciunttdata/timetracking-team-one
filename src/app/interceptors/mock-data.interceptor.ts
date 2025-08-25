@@ -1,24 +1,59 @@
-import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpResponse, HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { delay, catchError } from 'rxjs/operators';
+import { delay, catchError, map, tap } from 'rxjs/operators';
+import { inject } from '@angular/core';
 
 import { TimeEntry, EntryStatus } from '../interfaces/time-entry.interface';
 import { ApiResponse } from '../interfaces/api.interface';
 import { API_CONFIG } from '../config/api.config';
-import mockData from '../../assets/mock-data.json';
 
 /**
  * FALLBACK MODE (MOCK_AS_FALLBACK_ONLY = true): Try real requests first, fallback to mock
  * IMMEDIATE MODE (MOCK_AS_FALLBACK_ONLY = false): Intercept immediately with mock data
  */
 
-let mockTimeEntries: TimeEntry[] = mockData.timeEntries.map(entry => ({
-  ...entry,
-  date: new Date(entry.date),
-  createdAt: new Date(entry.createdAt),
-  updatedAt: new Date(entry.updatedAt),
-  status: (entry.status ?? 'completed_unsent') as EntryStatus
-}));
+// Cache for loaded mock data
+let mockTimeEntries: TimeEntry[] | null = null;
+let loadingPromise: Promise<TimeEntry[]> | null = null;
+
+/**
+ * Load mock data from assets dynamically
+ */
+async function loadMockData(): Promise<TimeEntry[]> {
+  if (mockTimeEntries) {
+    return mockTimeEntries;
+  }
+
+  if (loadingPromise) {
+    return loadingPromise;
+  }
+
+  loadingPromise = fetch('/assets/mock-data.json')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Failed to load mock data: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(mockData => {
+      mockTimeEntries = mockData.timeEntries.map((entry: any) => ({
+        ...entry,
+        date: new Date(entry.date),
+        createdAt: new Date(entry.createdAt),
+        updatedAt: new Date(entry.updatedAt),
+        status: (entry.status ?? 'completed_unsent') as EntryStatus
+      }));
+      return mockTimeEntries!;
+    })
+    .catch(error => {
+      console.error('Failed to load mock data:', error);
+      // Reset loading promise so it can be retried
+      loadingPromise = null;
+      throw error; // Propagate the error instead of returning empty array
+    });
+
+  return loadingPromise;
+}
 
 export const mockDataInterceptorFn: HttpInterceptorFn = (req, next) => {
   // Only intercept API calls to our mock domain when mock is enabled
@@ -44,23 +79,38 @@ export const mockDataInterceptorFn: HttpInterceptorFn = (req, next) => {
 };
 
 function handleMockRequest(req: any): Observable<any> {
-  try {
-    const response = routeRequest(req);
-
-    return of(new HttpResponse({
-      status: response.success ? 200 : 400,
-      statusText: response.success ? 'OK' : 'Error',
-      body: response
-    })).pipe(delay(200)); // Realistic delay
-
-  } catch (error) {
-    console.error('Mock request error:', error);
-    return of(new HttpResponse({
-      status: 500,
-      statusText: 'Internal Server Error',
-      body: createErrorResponse('Internal server error', 500)
-    }));
-  }
+  return new Observable(observer => {
+    loadMockData()
+      .then(() => {
+        try {
+          const response = routeRequest(req);
+          
+          observer.next(new HttpResponse({
+            status: response.success ? 200 : 400,
+            statusText: response.success ? 'OK' : 'Error',
+            body: response
+          }));
+          observer.complete();
+        } catch (error) {
+          console.error('Mock request error:', error);
+          observer.next(new HttpResponse({
+            status: 500,
+            statusText: 'Internal Server Error',
+            body: createErrorResponse('Internal server error', 500)
+          }));
+          observer.complete();
+        }
+      })
+      .catch(error => {
+        console.error('Failed to load mock data:', error);
+        observer.next(new HttpResponse({
+          status: 500,
+          statusText: 'Internal Server Error',
+          body: createErrorResponse('Failed to load mock data', 500)
+        }));
+        observer.complete();
+      });
+  }).pipe(delay(200)); // Realistic delay
 }
 
 function routeRequest(req: any): ApiResponse<any> {
@@ -71,18 +121,14 @@ function routeRequest(req: any): ApiResponse<any> {
     return handleUserTimeEntries(req);
   }
 
+  if (url.includes('/daily/by-date/') || url.includes('/time-entries')) {
+    return handleTimeEntriesRequest(req);
+  }
+  
   if (url.includes('/admin/')) {
     return handleAdminRequests(req);
   }
-
-  if (url.includes('/daily/by-date/')) {
-    return handleDailyTimeEntries(req);
-  }
-
-  if (url.includes('/time-entries')) {
-    return handleTimeEntriesRequest(req);
-  }
-
+  
   if (url.includes('/health')) {
     return createSuccessResponse({ status: 'healthy', timestamp: new Date().toISOString() });
   }
@@ -100,6 +146,10 @@ function handleUserTimeEntries(req: any): ApiResponse<any> {
   const currentUserId = getCurrentUserId();
   if (!currentUserId) {
     return createErrorResponse('User not authenticated', 401);
+  }
+
+  if (!mockTimeEntries) {
+    return createErrorResponse('Mock data not loaded', 500);
   }
 
   // Extract requested userId from URL if present
@@ -120,40 +170,31 @@ function handleUserTimeEntries(req: any): ApiResponse<any> {
   return createSuccessResponse(userEntries);
 }
 
-function handleDailyTimeEntries(req: any): ApiResponse<any> {
-  const currentUserId = getCurrentUserId();
-  if (!currentUserId) {
-    return createErrorResponse('User not authenticated', 401);
-  }
-
-  const userEntries = mockTimeEntries.filter(entry => entry.userId === currentUserId);
-
-  switch (req.method) {
-    case 'GET':
-      return createSuccessResponse(userEntries[0] || null);
-    case 'POST':
-      return handleCreateEntry(req);
-    case 'PATCH':
-      return handleUpdateEntry(req);
-    case 'DELETE':
-      return handleDeleteEntry(req);
-    default:
-      return createErrorResponse(`Method ${req.method} not supported`, 405);
-  }
-}
-
 function handleTimeEntriesRequest(req: any): ApiResponse<any> {
   const currentUserId = getCurrentUserId();
   if (!currentUserId) {
     return createErrorResponse('User not authenticated', 401);
   }
 
+
+  if (!mockTimeEntries) {
+    return createErrorResponse('Mock data not loaded', 500);
+
+  }
+
   switch (req.method) {
     case 'GET':
+      // For daily endpoints, return single entry or null
+      if (req.url.includes('/daily/by-date/')) {
+        const userEntries = mockTimeEntries.filter(entry => entry.userId === currentUserId);
+        return createSuccessResponse(userEntries[0] || null);
+      }
+      // For regular time-entries, return paginated results
       return handleGetEntries(req);
     case 'POST':
       return handleCreateEntry(req);
     case 'PUT':
+    case 'PATCH':
       return handleUpdateEntry(req);
     case 'DELETE':
       return handleDeleteEntry(req);
@@ -178,8 +219,12 @@ function handleAdminRequests(req: any): ApiResponse<any> {
 
 function handleGetEntries(req: any): ApiResponse<any> {
   const currentUserId = getCurrentUserId()!;
-  const userEntries = isAdmin()
-    ? mockTimeEntries
+  if (!mockTimeEntries) {
+    return createErrorResponse('Mock data not loaded', 500);
+  }
+  
+  const userEntries = isAdmin() 
+    ? mockTimeEntries 
     : mockTimeEntries.filter(entry => entry.userId === currentUserId);
 
   // Simple pagination
@@ -199,6 +244,10 @@ function handleGetEntries(req: any): ApiResponse<any> {
 function handleCreateEntry(req: any): ApiResponse<TimeEntry> {
   const requestData = req.body;
   const currentUserId = getCurrentUserId()!;
+
+  if (!mockTimeEntries) {
+    return createErrorResponse('Mock data not loaded', 500);
+  }
 
   if (!requestData.startTime) {
     return createErrorResponse('Missing required field: startTime', 400);
@@ -226,6 +275,10 @@ function handleUpdateEntry(req: any): ApiResponse<TimeEntry> {
 
   if (!entryId) {
     return createErrorResponse('Entry ID required', 400);
+  }
+
+  if (!mockTimeEntries) {
+    return createErrorResponse('Mock data not loaded', 500);
   }
 
   const entryIndex = mockTimeEntries.findIndex(e => e.id === entryId);
@@ -262,6 +315,11 @@ function handleDeleteEntry(req: any): ApiResponse<any> {
   if (!currentUserId) {
     return createErrorResponse('User not authenticated', 401);
   }
+
+  if (!mockTimeEntries) {
+    return createErrorResponse('Mock data not loaded', 500);
+  }
+
   if (req.url.includes('/by-date/')) {
     const urlParts = req.url.split('/');
     const dateIndex = urlParts.findIndex((part: string) => part === 'by-date') + 1;
@@ -284,7 +342,6 @@ function handleDeleteEntry(req: any): ApiResponse<any> {
     const deletedEntry = mockTimeEntries[entryIndex];
     mockTimeEntries.splice(entryIndex, 1);
 
-    console.log('🗑️ Deleted entry by date:', { id: deletedEntry.id, date: dateString });
     return createSuccessResponse({ message: 'Entry deleted successfully', deletedId: deletedEntry.id });
   }
 

@@ -1,28 +1,96 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, tap } from 'rxjs/operators';
 
 import {
   TimeEntry,
   CreateTimeEntryRequest,
   UpdateTimeEntryRequest
 } from '../interfaces/time-entry.interface';
-import { ApiResponse } from '../interfaces/api.interface';
+import { ApiResponse, LoginResponse, RefreshTokenResponse } from '../interfaces/api.interface';
+import { User } from '../interfaces/user.interface';
 import { 
   API_CONFIG,
   getDailyEndpoint, 
   getUserMonthlyEndpoint, 
   getUserWeeklyEndpoint 
 } from '../config/api.config';
+import { TokenService } from './token.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BackendApiService {
   private readonly baseUrl = API_CONFIG.BASE_URL;
+  private tokenService = inject(TokenService);
 
   constructor(private http: HttpClient) { }
+
+  // ===== AUTHENTICATION OPERATIONS =====
+
+  /**
+   * Login with email and password
+   * POST /auth/login
+   */
+  login(email: string, password: string): Observable<LoginResponse> {
+    const endpoint = `${this.baseUrl}/auth/login`;
+    const payload = { email, password };
+
+    return this.http.post<LoginResponse>(endpoint, payload, {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      })
+    }).pipe(
+      catchError(error => {
+        return this.handleError('login', error);
+      })
+    );
+  }
+
+  /**
+   * Refresh access token using refresh token
+   * POST /auth/refresh
+   */
+  refreshToken(refreshToken: string): Observable<RefreshTokenResponse> {
+    const endpoint = `${this.baseUrl}/auth/refresh`;
+    const payload = { refreshToken };
+
+    return this.http.post<RefreshTokenResponse>(endpoint, payload, {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      })
+    }).pipe(
+      catchError(error => this.handleError('refreshToken', error))
+    );
+  }
+
+  /**
+   * Logout (invalidate tokens)
+   * POST /auth/logout
+   */
+  logout(refreshToken?: string): Observable<void> {
+    const endpoint = `${this.baseUrl}/auth/logout`;
+    const payload = refreshToken ? { refreshToken } : {};
+
+    return this.http.post<void>(endpoint, payload, this.getHttpOptions()).pipe(
+      catchError(error => this.handleError('logout', error))
+    );
+  }
+
+  /**
+   * Validate current access token
+   * GET /auth/validate
+   */
+  validateToken(): Observable<{ valid: boolean; user?: User }> {
+    const endpoint = `${this.baseUrl}/auth/validate`;
+
+    return this.http.get<{ valid: boolean; user?: User }>(endpoint, this.getHttpOptions()).pipe(
+      catchError(error => this.handleError('validateToken', error))
+    );
+  }
 
   // ===== DAILY TIME ENTRY OPERATIONS =====
 
@@ -45,7 +113,7 @@ export class BackendApiService {
    * POST /daily/by-date/{date}
    */
   createDailyTimeEntry(date: Date, timeEntry: Omit<CreateTimeEntryRequest, 'userId' | 'date'>): Observable<TimeEntry> {
-    const currentUserId = this.getCurrentUserId();
+    const currentUserId = this.tokenService.getUserIdFromToken();
     if (!currentUserId) {
       return throwError(() => new Error('User not authenticated'));
     }
@@ -112,7 +180,7 @@ export class BackendApiService {
    * Get current user's monthly time entries
    */
   getCurrentUserMonthlyTimeEntries(date: Date): Observable<TimeEntry[]> {
-    const currentUserId = this.getCurrentUserId();
+    const currentUserId = this.tokenService.getUserIdFromToken();
     if (!currentUserId) {
       return throwError(() => new Error('User not authenticated'));
     }
@@ -140,7 +208,7 @@ export class BackendApiService {
    * Get current user's weekly time entries
    */
   getCurrentUserWeeklyTimeEntries(date: Date): Observable<TimeEntry[]> {
-    const currentUserId = this.getCurrentUserId();
+    const currentUserId = this.tokenService.getUserIdFromToken();
     if (!currentUserId) {
       return throwError(() => new Error('User not authenticated'));
     }
@@ -179,7 +247,7 @@ export class BackendApiService {
 
     const endpoint = `${this.baseUrl}/admin/time-entries/${entryId}/approve`;
     const payload = {
-      approvedBy: this.getCurrentUserId(),
+      approvedBy: this.tokenService.getUserIdFromToken(),
       approvedAt: new Date().toISOString()
     };
 
@@ -201,7 +269,7 @@ export class BackendApiService {
 
     const endpoint = `${this.baseUrl}/admin/time-entries/${entryId}/reject`;
     const payload = {
-      rejectedBy: this.getCurrentUserId(),
+      rejectedBy: this.tokenService.getUserIdFromToken(),
       rejectedAt: new Date().toISOString(),
       rejectionReason: reason
     };
@@ -223,7 +291,7 @@ export class BackendApiService {
     const endpoint = `${this.baseUrl}/bulk/submit`;
     const payload = {
       entryIds,
-      submittedBy: this.getCurrentUserId(),
+      submittedBy: this.tokenService.getUserIdFromToken(),
       submittedAt: new Date().toISOString()
     };
 
@@ -272,7 +340,7 @@ export class BackendApiService {
   // ===== PRIVATE HELPER METHODS =====
 
   private getHttpOptions() {
-    const token = this.getAuthToken();
+    const token = this.tokenService.getAccessToken();
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -328,19 +396,7 @@ export class BackendApiService {
     return date.toISOString().split('T')[0]; // YYYY-MM-DD format
   }
 
-  private getCurrentUserId(): string | null {
-    return localStorage.getItem('userId');
-  }
-
-  private getCurrentUserRole(): string | null {
-    return localStorage.getItem('role');
-  }
-
   private isAdmin(): boolean {
-    return this.getCurrentUserRole() === 'admin';
-  }
-
-  private getAuthToken(): string | null {
-    return localStorage.getItem('authToken');
+    return this.tokenService.getRoleFromToken() === 'admin';
   }
 }

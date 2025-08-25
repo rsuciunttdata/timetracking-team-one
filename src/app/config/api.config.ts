@@ -5,6 +5,12 @@ export const API_CONFIG = {
   
   // API Endpoints
   ENDPOINTS: {
+    // Authentication endpoints
+    AUTH_LOGIN: '/auth/login',
+    AUTH_REFRESH: '/auth/refresh', 
+    AUTH_LOGOUT: '/auth/logout',
+    AUTH_VALIDATE: '/auth/validate',
+    
     // Daily time entry operations (by date)
     DAILY_BY_DATE: '/daily/by-date',
     
@@ -30,7 +36,7 @@ export const API_CONFIG = {
   
   // Simple flags
   ENABLE_MOCK_DATA: true,
-  MOCK_AS_FALLBACK_ONLY: true  //false-immediately, true-try real requests first
+  MOCK_AS_FALLBACK_ONLY: true  // true: try real requests first, false: use mock immediately
 } as const;
 
 // Helper function to get full endpoint URL

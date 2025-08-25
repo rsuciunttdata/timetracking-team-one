@@ -11,6 +11,7 @@ import {
 } from '../interfaces/time-entry.interface';
 import { PaginationRequest } from '../interfaces/api.interface';
 import { BackendApiService } from './backend-api.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +19,8 @@ import { BackendApiService } from './backend-api.service';
 export class TimeEntryService {
 
   constructor(
-    private backendApiService: BackendApiService
+    private backendApiService: BackendApiService,
+    private authService: AuthService
   ) { }
 
   /**
@@ -219,15 +221,18 @@ export class TimeEntryService {
    * Get user context helper methods
    */
   private getCurrentUserId(): string | null {
-    return localStorage.getItem('userId');
+    const userId = this.authService.getUserId();
+    return userId;
   }
 
   private getCurrentUserRole(): string | null {
-    return localStorage.getItem('role');
+    const role = this.authService.getUserRole();
+    return role;
   }
 
   private isAdmin(): boolean {
-    return this.getCurrentUserRole() === 'admin';
+    const isAdmin = this.getCurrentUserRole() === 'admin';
+    return isAdmin;
   }
 
   // ===== BACKEND API METHODS =====
