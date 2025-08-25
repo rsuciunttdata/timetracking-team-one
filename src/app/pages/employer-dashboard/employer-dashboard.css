@@ -33,3 +33,9 @@ button[aria-label="Logout"]:hover {
 button[aria-label="Logout"]:active {
     transform: scale(0.98);
 }
+
+mat-toolbar a[mat-button] {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500;
+  text-transform: capitalize;
+}

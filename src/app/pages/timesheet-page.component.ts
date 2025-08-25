@@ -16,11 +16,12 @@ import { TimesheetTableComponent } from '../components/timesheet-table/timesheet
 import { AddModal } from '../components/modal/add-modal/add-modal';
 import { EditModal } from '../components/modal/edit-modal/edit-modal';
 import { TimeEntryService } from '../../app/services/time-entry.service';
-import { TimeEntry } from '../interfaces/time-entry.interface';
+import { TimeEntry, TimeEntryFilter } from '../interfaces/time-entry.interface';
 import { TimeUtil } from '../utils/time.util';
 
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-timesheet-page',
@@ -38,8 +39,9 @@ import { Router } from '@angular/router';
     MatNativeDateModule,
     MatSnackBarModule,
     MatDialogModule,
-    TimesheetTableComponent
-],
+    TimesheetTableComponent,
+    RouterModule
+  ],
   templateUrl: './timesheet-page.component.html',
   styleUrls: ['./timesheet-page.component.css']
 })
@@ -115,7 +117,12 @@ export class TimesheetPageComponent implements OnInit {
   private loadTimeEntries(): void {
     const pagination = { page: 1, pageSize: 100 };
 
-    this.timeEntryService.getUserTimeEntries(pagination).subscribe({
+    const filter: Omit<TimeEntryFilter, 'userId'> = {
+      startDate: this.startDateSignal() ?? undefined,
+      endDate: this.endDateSignal() ?? undefined
+    };
+
+    this.timeEntryService.getUserTimeEntries(pagination, filter).subscribe({
       next: (response) => {
         this.allTimeEntriesSignal.set(response.data);
       },
@@ -124,6 +131,7 @@ export class TimesheetPageComponent implements OnInit {
       }
     });
   }
+
 
   private setDefaultDateRange(): void {
     const today = new Date();
@@ -335,8 +343,9 @@ export class TimesheetPageComponent implements OnInit {
       maxWidth: '100vw',
       maxHeight: '100vh',
       panelClass: 'responsive-dialog',
-      data: { 
-        prefilledDate: new Date()
+      data: {
+        prefilledDate: new Date(),
+        userId: 'current-user' // This should come from auth service
       },
       disableClose: true
     });
@@ -354,8 +363,9 @@ export class TimesheetPageComponent implements OnInit {
       maxWidth: '100vw',
       maxHeight: '100vh',
       panelClass: 'responsive-dialog',
-      data: { 
-        prefilledDate: date
+      data: {
+        prefilledDate: date,
+        userId: 'current-user' // This should come from auth service
       },
       disableClose: true
     });
@@ -387,6 +397,10 @@ export class TimesheetPageComponent implements OnInit {
 
   getTotalWorkedHours(): string {
     return this.summaryDataSignal().totalHours;
+  }
+
+  get isAdmin(): boolean {
+    return localStorage.getItem('role') === 'admin';
   }
 
   onLogout(): void {
